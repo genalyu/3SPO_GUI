@@ -798,10 +798,10 @@ class RayPPOTrainer:
         final_batch = DataProto.concat(final_batch)
         return final_batch
 
-    def run_3spo_rollout_step(self, step_idx, task_configs):
-        """Perform a single rollout step for all envs."""
-        # 1. Get observations
-        env_outputs = ray.get([worker.get_obs.remote() for worker in self.env_workers])
+    def run_3spo_rollout_step(self, step_idx, task_configs, active_workers):
+        """Perform a single rollout step for a specific subset of workers."""
+        # 1. Get observations only from active workers
+        env_outputs = ray.get([worker.get_obs.remote() for worker in active_workers])
         
         # 2. VLLM Inference
         vllm_batch, valid_env_idx = self.prepare_vllm_inputs_full(env_outputs)
@@ -818,9 +818,9 @@ class RayPPOTrainer:
         
         response_texts = self.tokenizer.batch_decode(action_batch_output.batch['responses'], skip_special_tokens=True)
         
-        # 3. Environment Step
+        # 3. Environment Step for active workers
         futures = [
-            worker.step.remote(action_text) for worker, action_text in zip(self.env_workers, response_texts)
+            worker.step.remote(action_text) for worker, action_text in zip(active_workers, response_texts)
         ]
         new_env_outputs = ray.get(futures)
         
@@ -830,25 +830,16 @@ class RayPPOTrainer:
             
         return new_env_outputs
 
-    def run_3spo_step(self, step_idx, env_outputs, task_configs, timing_raw):
+    def run_3spo_step(self, step_idx, env_outputs, task_configs, active_workers, timing_raw):
         """Runs a single 3SPO step: sample G actions, compute advantages, update model, pick best."""
-        # 1. Sample G actions (done outside in the loop or here)
-        # Actually, let's assume this is called after vllm generation and env_step
-        
         G = self.config.algorithm.three_spo_g
-        num_envs = len(self.env_workers)
-        num_groups = num_envs // G
-
-        # 2. Collect rewards and training data for this step
-        process_results = ray.get([worker.get_step_train_dict.remote(step_idx) for worker in self.env_workers])
+        
+        # 2. Collect rewards and training data only from active workers
+        process_results = ray.get([worker.get_step_train_dict.remote(step_idx) for worker in active_workers])
         batch = collate_fn_dataproto(process_results)
         batch = DataProto.from_single_dict(batch)
 
-        # 3. Compute scores for this step (combination of format_reward and eval_result)
-        # eval_results = ray.get([worker.evaluate.remote() for worker in self.env_workers])
-        # format_rewards = [out['format_reward'] for out in env_outputs]
-        # scores = torch.tensor([float(e) + 0.5 * float(f) for e, f in zip(eval_results, format_rewards)], dtype=torch.float32)
-        # For simplicity, use what's already in env_outputs
+        # 3. Compute scores
         scores = torch.tensor([float(out.get('eval_result', 0)) + 0.5 * float(out['format_reward']) for out in env_outputs], dtype=torch.float32)
         
         batch.batch["token_level_rewards"] = scores.unsqueeze(-1)
@@ -859,18 +850,16 @@ class RayPPOTrainer:
         batch.non_tensor_batch["uid"] = np.array([x['id'] for x in task_configs], dtype=object)
         batch.non_tensor_batch["task_id"] = np.array([x['id'] for x in task_configs], dtype=object)
 
-        # 4. Compute advantages
+        # 4. Compute advantages (This correctly groups by G internally)
         batch = compute_advantage(batch, adv_estimator=AdvantageEstimator.THREE_SPO)
 
-        # 5. Update Actor per step
+        # 5. Update Actor
         with _timer("update_actor_3spo", timing_raw):
             actor_output = self.actor_rollout_wg.update_actor(batch)
-            print(f"3SPO Step {step_idx} updated actor.")
 
-        # 6. Save ALL states to ReplayBuffer for continuation
+        # 6. Save to ReplayBuffer
         history_actions_list = [out.get('history_actions', None) for out in env_outputs]
         self.replay.update_replay_buffer_batch(task_configs, batch, history_actions_list=history_actions_list)
-        print(f"3SPO Step {step_idx}: Saved {len(env_outputs)} states to replay buffer.")
 
         return batch
 
@@ -897,63 +886,94 @@ class RayPPOTrainer:
 
         rollout_n = self.config.worker.rollout.n
         for _ in tqdm(range(self.config.trainer.total_episodes), desc="Episode", position=0):
-            # --- 3SPO BFS Mode ---
+            # --- 3SPO DFS Mode ---
             if self.config.algorithm.adv_estimator == AdvantageEstimator.THREE_SPO:
-                # 1. Initial Frontier: Start with a batch of tasks
+                G = rollout_n
+                K = len(self.env_workers) // G
+                stacks = [[] for _ in range(K)]
+                train_iter = iter(self.train_dataloader)
+                
+                # Fill stacks with initial tasks
                 try:
-                    batch_dict = next(iter(self.train_dataloader))
+                    batch_dict = next(train_iter)
+                    for i, cfg in enumerate(batch_dict):
+                        stacks[i % K].append({"config": cfg, "actions": [], "depth": 0})
                 except StopIteration:
                     break
                 
-                # Each state in frontier: (task_config, history_actions)
-                frontier = [{"config": cfg, "actions": []} for cfg in batch_dict]
-                
-                for step_idx in range(self.config.env.max_steps):
-                    print(f"--- 3SPO Depth {step_idx} | Frontier Size: {len(frontier)} ---")
-                    next_frontier = []
+                while True:
+                    active_parents = [None] * K
+                    active_slots = []
                     
-                    # 2. Process frontier in chunks (limited by number of workers)
-                    G = rollout_n
-                    K = len(self.env_workers) // G # How many parents we can process in parallel
+                    for k in range(K):
+                        # If this slot's stack is empty, try to refill it with a new task
+                        if not stacks[k]:
+                            try:
+                                batch_dict = next(train_iter)
+                                # Distribute the new batch of tasks among empty stacks
+                                for cfg in batch_dict:
+                                    # Find the first empty stack to put this task
+                                    for target_k in range(K):
+                                        if not stacks[target_k] and target_k not in active_slots:
+                                            stacks[target_k].append({"config": cfg, "actions": [], "depth": 0})
+                                            break
+                            except StopIteration:
+                                pass # No more tasks in dataloader
+
+                        # If it now has a task, pick it up
+                        if stacks[k]:
+                            active_parents[k] = stacks[k].pop()
+                            active_slots.append(k)
                     
-                    for i in range(0, len(frontier), K):
-                        chunk = frontier[i : i + K]
-                        actual_K = len(chunk)
-                        
-                        # Prepare task configs for workers
-                        round_task_configs = []
-                        reset_objects = []
-                        for parent in chunk:
-                            for _ in range(G):
-                                round_task_configs.append(parent["config"])
-                                worker = self.env_workers[len(reset_objects)]
-                                reset_objects.append(worker.reset_to_state.remote(parent["config"], parent["actions"]))
-                        
-                        # Execute expansion round
-                        ray.get(reset_objects)
-                        
-                        # One-step rollout for all envs in this round
-                        # (Reuse existing logic but for 1 step)
-                        env_outputs = self.run_3spo_rollout_step(step_idx, round_task_configs)
-                        
-                        # 3. Step-level Opt
-                        step_batch = self.run_3spo_step(step_idx, env_outputs, round_task_configs, {})
-                        
-                        # 4. Collect results for next depth
-                        for out in env_outputs:
-                            if not out['is_done']:
-                                next_frontier.append({
-                                    "config": out['task_config'],
-                                    "actions": out['history_actions']
-                                })
-                        
-                        # Cap frontier to prevent exponential explosion if necessary
-                        if len(next_frontier) > 512: # Example cap
-                            break
-                    
-                    frontier = next_frontier
-                    if not frontier:
+                    if not active_slots:
                         break
+                        
+                    # Prepare task configs for workers
+                    round_task_configs = []
+                    reset_objects = []
+                    active_workers = []
+                    for k in active_slots:
+                        parent = active_parents[k]
+                        # Each slot k uses its dedicated group of G workers: [k*G, (k+1)*G)
+                        for g_idx in range(G):
+                            round_task_configs.append(parent["config"])
+                            worker_idx = k * G + g_idx
+                            worker = self.env_workers[worker_idx]
+                            active_workers.append(worker)
+                            reset_objects.append(worker.reset_to_state.remote(parent["config"], parent["actions"]))
+                    
+                    # Execute expansion round
+                    ray.get(reset_objects)
+                    
+                    # One-step rollout for all envs in this round
+                    # Use the depth of the first parent for logging/step_idx
+                    current_depth = active_parents[active_slots[0]]["depth"]
+                    env_outputs = self.run_3spo_rollout_step(current_depth, round_task_configs, active_workers)
+                    
+                    # 3. Step-level Opt
+                    step_batch = self.run_3spo_step(current_depth, env_outputs, round_task_configs, active_workers, {})
+                    
+                    # 4. Collect results and push back to stacks for next step (DFS)
+                    for i, k in enumerate(active_slots):
+                        slot_outputs = env_outputs[i*G : (i+1)*G]
+                        
+                        # Sort by score: eval_result + 0.5 * format_reward
+                        scored_children = []
+                        for out in slot_outputs:
+                            score = float(out.get('eval_result', 0)) + 0.5 * float(out['format_reward'])
+                            scored_children.append((score, out))
+                        
+                        # Sort ascending so the best one is at the end (popped last)
+                        scored_children.sort(key=lambda x: x[0])
+                        
+                        parent = active_parents[k]
+                        for score, out in scored_children:
+                            if not out['is_done'] and (parent["depth"] + 1) < self.config.env.max_steps:
+                                stacks[k].append({
+                                    "config": out['task_config'],
+                                    "actions": out['history_actions'],
+                                    "depth": parent["depth"] + 1
+                                })
                 continue # Skip the normal PPO loop
             
             # --- Normal PPO/ARPO Mode ---
