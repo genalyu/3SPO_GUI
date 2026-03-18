@@ -186,10 +186,8 @@ def compute_advantage(data: DataProto, adv_estimator: AdvantageEstimator, gamma:
         # 3SPO uses step-level scores directly passed in token_level_rewards
         # token_level_rewards: (bsz, response_length)
         scores = token_level_rewards.sum(dim=-1)
-        # index is not used because we assume group_size is fixed
-        # But wait, we need group_size. Let's assume it's passed via data.meta_info
-        group_size = data.meta_info.get("group_size", 8)
-        advantages = core_algos.compute_3spo_step_advantage(scores, response_mask, group_size)
+        # In 3SPO, we use the state-specific index (uid) to group for variable n(s_t)
+        advantages = core_algos.compute_3spo_step_advantage(scores, response_mask, index)
         returns = advantages # 3SPO returns are just advantages for now
     else:
         raise NotImplementedError
@@ -296,7 +294,91 @@ class RayPPOTrainer:
         self._create_dataloader()
         self._create_envs()
         self._load_replay_data()
+        
+        # --- 3SPO Reward Design States ---
+        self.state_stats = defaultdict(lambda: {"n_success": 0, "n_total": 0, "n_fail": 0})
+        self.state_embeddings = {} # (task_id, tuple(history_actions)) -> torch.Tensor (psi(s))
+        
+        # --- 3SPO Constants ---
+        self.lambda_base = getattr(config.algorithm, "lambda_base", 1.0)
+        self.alpha = getattr(config.algorithm, "alpha", 0.1)
+        self.T_max = getattr(config.algorithm, "T_max", 1000) # total episodes/steps
+        self.xi = getattr(config.algorithm, "xi", 3) # failure threshold
+        self.epsilon = 1e-6
+        self.rollout_rule_lambda = getattr(config.algorithm, "rollout_rule_lambda", 1.0)
+        self.rollout_rule_G = getattr(config.algorithm, "three_spo_g", 8)
     
+    def _get_state_id(self, task_id, history_actions):
+        return (task_id, tuple(history_actions) if history_actions else ())
+
+    def _compute_psi(self, env_output):
+        """Compute state embedding psi(s). Use mean of pixel_values if available."""
+        if 'multi_modal_inputs' in env_output and 'pixel_values' in env_output['multi_modal_inputs']:
+            # pixel_values shape: [num_patches, hidden_dim] or similar
+            # For Qwen2-VL it's usually [N, 1176] or [N, 10764]
+            pv = env_output['multi_modal_inputs']['pixel_values']
+            if isinstance(pv, torch.Tensor):
+                return pv.mean(dim=0).cpu()
+        # Fallback to zero vector if no vision info
+        return torch.zeros(128)
+
+    def _get_lambda_t(self, t):
+        return self.lambda_base * (1 - np.exp(-self.alpha * t / self.T_max))
+
+    def _get_state_score(self, state_id, t):
+        stats = self.state_stats[state_id]
+        if stats["n_fail"] >= self.xi:
+            return 0.0
+        
+        lambda_t = self._get_lambda_t(t)
+        success_rate = stats["n_success"] / (stats["n_total"] + self.epsilon)
+        score = np.exp(-lambda_t * success_rate)
+        return float(score)
+
+    def _get_omega(self, n_total):
+        return 0.5 * np.exp(-n_total)
+
+    def _compute_r_novel(self, psi_t, psi_next):
+        if psi_t is None or psi_next is None:
+            return 0.0
+        diff_norm = torch.norm(psi_next - psi_t, p=2)
+        base_norm = torch.norm(psi_t, p=2)
+        return float(diff_norm / (base_norm + self.epsilon))
+
+    def _compute_r_3spo(self, state_id, next_state_id, r_osworld, t):
+        psi_t = self.state_embeddings.get(state_id)
+        psi_next = self.state_embeddings.get(next_state_id)
+        
+        n_total = self.state_stats[state_id]["n_total"]
+        omega = self._get_omega(n_total)
+        
+        r_novel = self._compute_r_novel(psi_t, psi_next)
+        
+        s_t = self._get_state_score(state_id, t)
+        s_next = self._get_state_score(next_state_id, t)
+        
+        r_3spo = omega * r_novel + (0.5 - omega) * (s_t - s_next) + 0.5 * r_osworld
+        return r_3spo
+
+    def _compute_adaptive_n(self, state_id, t, entropy):
+        s_t = self._get_state_score(state_id, t)
+        # n(s_t) = floor(G * Sigmoid(lambda * S(s_t) * H))
+        val = self.rollout_rule_lambda * s_t * entropy
+        sigmoid_val = 1.0 / (1.0 + np.exp(-val))
+        n = int(np.floor(self.rollout_rule_G * sigmoid_val))
+        return max(1, n) # Ensure at least 1 rollout
+
+    def _update_stats_backprop(self, task_id, history_actions, is_success):
+        """Backpropagate success/fail info up the history tree."""
+        for i in range(len(history_actions) + 1):
+            sub_history = history_actions[:i]
+            sid = self._get_state_id(task_id, sub_history)
+            self.state_stats[sid]["n_total"] += 1
+            if is_success:
+                self.state_stats[sid]["n_success"] += 1
+            else:
+                self.state_stats[sid]["n_fail"] += 1
+
     def _load_replay_data(self):
         data_path = None
         self.replay = ReplayBuffer(data_path, 8)
@@ -830,24 +912,51 @@ class RayPPOTrainer:
             
         return new_env_outputs
 
-    def run_3spo_step(self, step_idx, env_outputs, task_configs, active_workers, timing_raw):
+    def run_3spo_step(self, step_idx, env_outputs, task_configs, active_workers, state_ids, timing_raw):
         """Runs a single 3SPO step: sample G actions, compute advantages, update model, pick best."""
-        G = self.config.algorithm.three_spo_g
+        # state_ids is a list of state identifiers for each output in env_outputs
         
         # 2. Collect rewards and training data only from active workers
         process_results = ray.get([worker.get_step_train_dict.remote(step_idx) for worker in active_workers])
         batch = collate_fn_dataproto(process_results)
         batch = DataProto.from_single_dict(batch)
 
-        # 3. Compute scores
-        scores = torch.tensor([float(out.get('eval_result', 0)) + 0.5 * float(out['format_reward']) for out in env_outputs], dtype=torch.float32)
+        # 3. Compute scores using the new 3SPO reward design
+        scores = []
+        for i, out in enumerate(env_outputs):
+            task_id = out['task_config']['id']
+            history_actions = out['history_actions']
+            parent_history = history_actions[:-1]
+            
+            sid = self._get_state_id(task_id, parent_history)
+            next_sid = self._get_state_id(task_id, history_actions)
+            
+            # Update embeddings if not present
+            if sid not in self.state_embeddings:
+                self.state_embeddings[sid] = self._compute_psi(out) # Placeholder
+            
+            if next_sid not in self.state_embeddings:
+                self.state_embeddings[next_sid] = self._compute_psi(out)
+                
+            r_osworld = float(out.get('eval_result', 0)) + 0.5 * float(out['format_reward'])
+            r_3spo = self._compute_r_3spo(sid, next_sid, r_osworld, self.global_step)
+            scores.append(r_3spo)
+            
+            # If child is terminal, backpropagate success/fail
+            if out['is_done']:
+                is_success = float(out.get('eval_result', 0)) > 0.05
+                self._update_stats_backprop(task_id, history_actions, is_success)
+            else:
+                # If not terminal, we still count it as a "total" visit for the parent
+                self.state_stats[sid]["n_total"] += 1
+
+        scores = torch.tensor(scores, dtype=torch.float32)
         
         batch.batch["token_level_rewards"] = scores.unsqueeze(-1)
         batch.batch["responses"] = batch.batch["input_ids"]
         batch.batch["response_mask"] = batch.batch["labels"]!=-100
         batch.batch["eval_results"] = torch.tensor([float(out.get('eval_result', 0)) for out in env_outputs], dtype=torch.float32)
-        batch.meta_info["group_size"] = G
-        batch.non_tensor_batch["uid"] = np.array([x['id'] for x in task_configs], dtype=object)
+        batch.non_tensor_batch["uid"] = np.array(state_ids, dtype=object) # Use state_ids to group correctly
         batch.non_tensor_batch["task_id"] = np.array([x['id'] for x in task_configs], dtype=object)
 
         # 4. Compute advantages (This correctly groups by G internally)
@@ -932,14 +1041,25 @@ class RayPPOTrainer:
                     round_task_configs = []
                     reset_objects = []
                     active_workers = []
+                    round_state_ids = []
+                    
                     for k in active_slots:
                         parent = active_parents[k]
+                        task_id = parent["config"]["id"]
+                        sid = self._get_state_id(task_id, parent["actions"])
+                        
+                        # Calculate adaptive n(s_t) BEFORE rollout
+                        # Default entropy=1.0 for now
+                        nk = self._compute_adaptive_n(sid, self.global_step, entropy=1.0)
+                        
                         # Each slot k uses its dedicated group of G workers: [k*G, (k+1)*G)
-                        for g_idx in range(G):
+                        # But we only use the first nk workers
+                        for g_idx in range(nk):
                             round_task_configs.append(parent["config"])
                             worker_idx = k * G + g_idx
                             worker = self.env_workers[worker_idx]
                             active_workers.append(worker)
+                            round_state_ids.append(sid)
                             reset_objects.append(worker.reset_to_state.remote(parent["config"], parent["actions"]))
                     
                     # Execute expansion round
@@ -947,26 +1067,40 @@ class RayPPOTrainer:
                     
                     # One-step rollout for all envs in this round
                     # Use the depth of the first parent for logging/step_idx
+                    self.global_step += 1
                     current_depth = active_parents[active_slots[0]]["depth"]
                     env_outputs = self.run_3spo_rollout_step(current_depth, round_task_configs, active_workers)
                     
                     # 3. Step-level Opt
-                    step_batch = self.run_3spo_step(current_depth, env_outputs, round_task_configs, active_workers, {})
+                    step_batch = self.run_3spo_step(current_depth, env_outputs, round_task_configs, active_workers, round_state_ids, {})
                     
                     # 4. Collect results and push back to stacks for next step (DFS)
-                    for i, k in enumerate(active_slots):
-                        slot_outputs = env_outputs[i*G : (i+1)*G]
+                    # We need to correctly slice env_outputs based on nk
+                    output_idx = 0
+                    for k in active_slots:
+                        parent = active_parents[k]
+                        task_id = parent["config"]["id"]
+                        sid = self._get_state_id(task_id, parent["actions"])
+                        nk = self._compute_adaptive_n(sid, self.global_step, entropy=1.0)
                         
-                        # Sort by score: eval_result + 0.5 * format_reward
+                        slot_outputs = env_outputs[output_idx : output_idx + nk]
+                        output_idx += nk
+                        
+                        # Sort by score using the new 3SPO reward design
                         scored_children = []
                         for out in slot_outputs:
-                            score = float(out.get('eval_result', 0)) + 0.5 * float(out['format_reward'])
+                            # score is already computed inside run_3spo_step or we can recompute
+                            # Actually, let's just recompute for sorting
+                            history_actions = out['history_actions']
+                            next_sid = self._get_state_id(task_id, history_actions)
+                            r_osworld = float(out.get('eval_result', 0)) + 0.5 * float(out['format_reward'])
+                            score = self._compute_r_3spo(sid, next_sid, r_osworld, self.global_step)
                             scored_children.append((score, out))
                         
                         # Sort ascending so the best one is at the end (popped last)
                         scored_children.sort(key=lambda x: x[0])
                         
-                        parent = active_parents[k]
+                        # Push all generated children to stack (since we already limited to nk)
                         for score, out in scored_children:
                             if not out['is_done'] and (parent["depth"] + 1) < self.config.env.max_steps:
                                 stacks[k].append({

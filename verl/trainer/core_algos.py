@@ -177,22 +177,33 @@ def compute_grpo_outcome_advantage(
 
 @torch.no_grad()
 def compute_3spo_step_advantage(
-    scores: torch.Tensor, response_mask: torch.Tensor, group_size: int, eps: float = 1e-6
+    scores: torch.Tensor, response_mask: torch.Tensor, index: torch.Tensor, eps: float = 1e-6
 ) -> torch.Tensor:
     """
-    Compute step-level advantage for 3SPO.
+    Compute step-level advantage for 3SPO, allowing variable group sizes.
     scores: (bsz,)
-    group_size: number of samples per state
+    index: (bsz,) state identifiers to group by
     """
-    bsz = scores.shape[0]
-    num_groups = bsz // group_size
-    advantages = torch.zeros_like(scores)
+    id2score = defaultdict(list)
+    id2mean, id2std = {}, {}
 
-    for i in range(num_groups):
-        group_scores = scores[i * group_size : (i + 1) * group_size]
-        mean = group_scores.mean()
-        std = group_scores.std()
-        advantages[i * group_size : (i + 1) * group_size] = (group_scores - mean) / (std + eps)
+    bsz = scores.shape[0]
+    for i in range(bsz):
+        id2score[index[i]].append(scores[i])
+
+    for idx in id2score:
+        if len(id2score[idx]) > 1:
+            id2mean[idx] = torch.mean(torch.tensor(id2score[idx]))
+            id2std[idx] = torch.std(torch.tensor(id2score[idx]))
+        else:
+            # For n=1, we can't compute std, so we use mean=score and std=0 (or 1)
+            # Actually, advantage will be 0.
+            id2mean[idx] = torch.tensor(id2score[idx][0])
+            id2std[idx] = torch.tensor(0.0)
+
+    advantages = torch.zeros_like(scores)
+    for i in range(bsz):
+        advantages[i] = (scores[i] - id2mean[index[i]]) / (id2std[index[i]] + eps)
 
     return advantages.unsqueeze(-1) * response_mask
 
