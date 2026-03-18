@@ -297,9 +297,12 @@ class RayPPOTrainer:
         
         # --- 3SPO Reward Design States ---
         self.state_stats = defaultdict(lambda: {"n_success": 0, "n_total": 0, "n_fail": 0})
-        self.state_embeddings = {} # (task_id, tuple(history_actions)) -> torch.Tensor (psi(s))
+        self.state_embeddings = {} # visual_id -> torch.Tensor (psi(s))
+        self.state_gallery = [] # Global list: [(embedding, visual_id)]
+        self.visual_id_counter = 0
         
         # --- 3SPO Constants ---
+        self.similarity_threshold = getattr(config.algorithm, "similarity_threshold", 0.98)
         self.lambda_base = getattr(config.algorithm, "lambda_base", 1.0)
         self.alpha = getattr(config.algorithm, "alpha", 0.1)
         self.T_max = getattr(config.algorithm, "T_max", 1000) # total episodes/steps
@@ -308,7 +311,35 @@ class RayPPOTrainer:
         self.rollout_rule_lambda = getattr(config.algorithm, "rollout_rule_lambda", 1.0)
         self.rollout_rule_G = getattr(config.algorithm, "three_spo_g", 8)
     
+    def _get_visual_state_id(self, psi_embedding):
+        """Find or create a unique visual_id globally."""
+        if psi_embedding is None:
+            return -1
+            
+        # Normalize for cosine similarity
+        psi_norm = psi_embedding / (torch.norm(psi_embedding, p=2) + self.epsilon)
+        
+        best_vid = -1
+        max_sim = -1.0
+        
+        for emb, vid in self.state_gallery:
+            sim = torch.dot(psi_norm, emb).item()
+            if sim > max_sim:
+                max_sim = sim
+                best_vid = vid
+        
+        if max_sim > self.similarity_threshold:
+            return best_vid
+            
+        # Create new visual_id
+        new_vid = self.visual_id_counter
+        self.visual_id_counter += 1
+        self.state_gallery.append((psi_norm, new_vid))
+        self.state_embeddings[new_vid] = psi_embedding
+        return new_vid
+
     def _get_state_id(self, task_id, history_actions):
+        # Keep this as a backup or for non-visual fallback
         return (task_id, tuple(history_actions) if history_actions else ())
 
     def _compute_psi(self, env_output):
@@ -368,16 +399,14 @@ class RayPPOTrainer:
         n = int(np.floor(self.rollout_rule_G * sigmoid_val))
         return max(1, n) # Ensure at least 1 rollout
 
-    def _update_stats_backprop(self, task_id, history_actions, is_success):
-        """Backpropagate success/fail info up the history tree."""
-        for i in range(len(history_actions) + 1):
-            sub_history = history_actions[:i]
-            sid = self._get_state_id(task_id, sub_history)
-            self.state_stats[sid]["n_total"] += 1
+    def _update_stats_backprop(self, visual_ids, is_success):
+        """Backpropagate success/fail info up the visual state history."""
+        for vid in visual_ids:
+            self.state_stats[vid]["n_total"] += 1
             if is_success:
-                self.state_stats[sid]["n_success"] += 1
+                self.state_stats[vid]["n_success"] += 1
             else:
-                self.state_stats[sid]["n_fail"] += 1
+                self.state_stats[vid]["n_fail"] += 1
 
     def _load_replay_data(self):
         data_path = None
@@ -912,9 +941,10 @@ class RayPPOTrainer:
             
         return new_env_outputs
 
-    def run_3spo_step(self, step_idx, env_outputs, task_configs, active_workers, state_ids, timing_raw):
+    def run_3spo_step(self, step_idx, env_outputs, task_configs, active_workers, parent_vids, child_vids, timing_raw):
         """Runs a single 3SPO step: sample G actions, compute advantages, update model, pick best."""
-        # state_ids is a list of state identifiers for each output in env_outputs
+        # parent_vids: visual IDs of the parent states
+        # child_vids: visual IDs of the resulting states
         
         # 2. Collect rewards and training data only from active workers
         process_results = ray.get([worker.get_step_train_dict.remote(step_idx) for worker in active_workers])
@@ -923,31 +953,17 @@ class RayPPOTrainer:
 
         # 3. Compute scores using the new 3SPO reward design
         scores = []
-        for i, out in enumerate(env_outputs):
+        for i, (out, cvid) in enumerate(zip(env_outputs, child_vids)):
             task_id = out['task_config']['id']
-            history_actions = out['history_actions']
-            parent_history = history_actions[:-1]
+            sid = parent_vids[i]
+            next_sid = cvid
             
-            sid = self._get_state_id(task_id, parent_history)
-            next_sid = self._get_state_id(task_id, history_actions)
-            
-            # Update embeddings if not present
-            if sid not in self.state_embeddings:
-                self.state_embeddings[sid] = self._compute_psi(out) # Placeholder
-            
-            if next_sid not in self.state_embeddings:
-                self.state_embeddings[next_sid] = self._compute_psi(out)
-                
             r_osworld = float(out.get('eval_result', 0)) + 0.5 * float(out['format_reward'])
             r_3spo = self._compute_r_3spo(sid, next_sid, r_osworld, self.global_step)
             scores.append(r_3spo)
             
-            # If child is terminal, backpropagate success/fail
-            if out['is_done']:
-                is_success = float(out.get('eval_result', 0)) > 0.05
-                self._update_stats_backprop(task_id, history_actions, is_success)
-            else:
-                # If not terminal, we still count it as a "total" visit for the parent
+            # Note: backprop is now handled in the DFS loop for terminal states
+            if not out['is_done']:
                 self.state_stats[sid]["n_total"] += 1
 
         scores = torch.tensor(scores, dtype=torch.float32)
@@ -956,7 +972,7 @@ class RayPPOTrainer:
         batch.batch["responses"] = batch.batch["input_ids"]
         batch.batch["response_mask"] = batch.batch["labels"]!=-100
         batch.batch["eval_results"] = torch.tensor([float(out.get('eval_result', 0)) for out in env_outputs], dtype=torch.float32)
-        batch.non_tensor_batch["uid"] = np.array(state_ids, dtype=object) # Use state_ids to group correctly
+        batch.non_tensor_batch["uid"] = np.array(parent_vids, dtype=object) # Group by visual parent ID
         batch.non_tensor_batch["task_id"] = np.array([x['id'] for x in task_configs], dtype=object)
 
         # 4. Compute advantages (This correctly groups by G internally)
@@ -1006,7 +1022,8 @@ class RayPPOTrainer:
                 try:
                     batch_dict = next(train_iter)
                     for i, cfg in enumerate(batch_dict):
-                        stacks[i % K].append({"config": cfg, "actions": [], "depth": 0})
+                        # Initial state has no vision yet, but we'll get it after reset
+                        stacks[i % K].append({"config": cfg, "actions": [], "depth": 0, "visual_history": []})
                 except StopIteration:
                     break
                 
@@ -1024,7 +1041,7 @@ class RayPPOTrainer:
                                     # Find the first empty stack to put this task
                                     for target_k in range(K):
                                         if not stacks[target_k] and target_k not in active_slots:
-                                            stacks[target_k].append({"config": cfg, "actions": [], "depth": 0})
+                                            stacks[target_k].append({"config": cfg, "actions": [], "depth": 0, "visual_history": []})
                                             break
                             except StopIteration:
                                 pass # No more tasks in dataloader
@@ -1041,72 +1058,88 @@ class RayPPOTrainer:
                     round_task_configs = []
                     reset_objects = []
                     active_workers = []
-                    round_state_ids = []
                     
                     for k in active_slots:
                         parent = active_parents[k]
+                        # Reset workers to the parent state
+                        futures = [self.env_workers[k * G + g_idx].reset_to_state.remote(parent["config"], parent["actions"]) for g_idx in range(G)]
+                        # Wait for reset to get initial vision if it's the first step
+                        reset_env_outputs = ray.get(futures)
+                        
                         task_id = parent["config"]["id"]
-                        sid = self._get_state_id(task_id, parent["actions"])
+                        
+                        # Compute visual_id for the parent state if not already in visual_history
+                        parent_psi = self._compute_psi(reset_env_outputs[0])
+                        parent_vid = self._get_visual_state_id(parent_psi)
+                        
+                        if not parent["visual_history"] or parent["visual_history"][-1] != parent_vid:
+                            parent["visual_history"].append(parent_vid)
+                        
+                        sid = parent_vid
                         
                         # Calculate adaptive n(s_t) BEFORE rollout
-                        # Default entropy=1.0 for now
                         nk = self._compute_adaptive_n(sid, self.global_step, entropy=1.0)
                         
-                        # Each slot k uses its dedicated group of G workers: [k*G, (k+1)*G)
-                        # But we only use the first nk workers
+                        # Use only nk workers
                         for g_idx in range(nk):
                             round_task_configs.append(parent["config"])
                             worker_idx = k * G + g_idx
                             worker = self.env_workers[worker_idx]
                             active_workers.append(worker)
-                            round_state_ids.append(sid)
-                            reset_objects.append(worker.reset_to_state.remote(parent["config"], parent["actions"]))
-                    
-                    # Execute expansion round
-                    ray.get(reset_objects)
                     
                     # One-step rollout for all envs in this round
-                    # Use the depth of the first parent for logging/step_idx
                     self.global_step += 1
                     current_depth = active_parents[active_slots[0]]["depth"]
                     env_outputs = self.run_3spo_rollout_step(current_depth, round_task_configs, active_workers)
                     
+                    # We need to compute visual IDs for all children
+                    child_vids = []
+                    for out in env_outputs:
+                        psi = self._compute_psi(out)
+                        vid = self._get_visual_state_id(psi)
+                        child_vids.append(vid)
+
                     # 3. Step-level Opt
-                    step_batch = self.run_3spo_step(current_depth, env_outputs, round_task_configs, active_workers, round_state_ids, {})
-                    
-                    # 4. Collect results and push back to stacks for next step (DFS)
-                    # We need to correctly slice env_outputs based on nk
+                    # Pass the parent VIDs to run_3spo_step
+                    parent_vids = []
                     output_idx = 0
                     for k in active_slots:
                         parent = active_parents[k]
-                        task_id = parent["config"]["id"]
-                        sid = self._get_state_id(task_id, parent["actions"])
+                        sid = parent["visual_history"][-1]
+                        nk = self._compute_adaptive_n(sid, self.global_step, entropy=1.0)
+                        parent_vids.extend([sid] * nk)
+                        
+                    step_batch = self.run_3spo_step(current_depth, env_outputs, round_task_configs, active_workers, parent_vids, child_vids, {})
+                    
+                    # 4. Collect results and push back to stacks for next step (DFS)
+                    output_idx = 0
+                    for k in active_slots:
+                        parent = active_parents[k]
+                        sid = parent["visual_history"][-1]
                         nk = self._compute_adaptive_n(sid, self.global_step, entropy=1.0)
                         
                         slot_outputs = env_outputs[output_idx : output_idx + nk]
+                        slot_child_vids = child_vids[output_idx : output_idx + nk]
                         output_idx += nk
                         
-                        # Sort by score using the new 3SPO reward design
                         scored_children = []
-                        for out in slot_outputs:
-                            # score is already computed inside run_3spo_step or we can recompute
-                            # Actually, let's just recompute for sorting
-                            history_actions = out['history_actions']
-                            next_sid = self._get_state_id(task_id, history_actions)
+                        for out, cvid in zip(slot_outputs, slot_child_vids):
                             r_osworld = float(out.get('eval_result', 0)) + 0.5 * float(out['format_reward'])
-                            score = self._compute_r_3spo(sid, next_sid, r_osworld, self.global_step)
-                            scored_children.append((score, out))
+                            score = self._compute_r_3spo(sid, cvid, r_osworld, self.global_step)
+                            scored_children.append((score, out, cvid))
                         
-                        # Sort ascending so the best one is at the end (popped last)
                         scored_children.sort(key=lambda x: x[0])
                         
-                        # Push all generated children to stack (since we already limited to nk)
-                        for score, out in scored_children:
-                            if not out['is_done'] and (parent["depth"] + 1) < self.config.env.max_steps:
+                        for score, out, cvid in scored_children:
+                            if out['is_done']:
+                                is_success = float(out.get('eval_result', 0)) > 0.05
+                                self._update_stats_backprop(parent["visual_history"] + [cvid], is_success)
+                            elif (parent["depth"] + 1) < self.config.env.max_steps:
                                 stacks[k].append({
                                     "config": out['task_config'],
                                     "actions": out['history_actions'],
-                                    "depth": parent["depth"] + 1
+                                    "depth": parent["depth"] + 1,
+                                    "visual_history": parent["visual_history"] + [cvid]
                                 })
                 continue # Skip the normal PPO loop
             
