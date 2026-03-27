@@ -391,10 +391,10 @@ class RayPPOTrainer:
         r_3spo = omega * r_novel + (0.5 - omega) * (s_t - s_next) + 0.5 * r_osworld
         return r_3spo
 
-    def _compute_adaptive_n(self, state_id, t, entropy):
+    def _compute_adaptive_n(self, state_id, t):
         s_t = self._get_state_score(state_id, t)
-        # n(s_t) = floor(G * Sigmoid(lambda * S(s_t) * H))
-        val = self.rollout_rule_lambda * s_t * entropy
+        # n(s_t) = floor(G * Sigmoid(lambda * S(s_t)))
+        val = self.rollout_rule_lambda * s_t
         sigmoid_val = 1.0 / (1.0 + np.exp(-val))
         n = int(np.floor(self.rollout_rule_G * sigmoid_val))
         return max(1, n) # Ensure at least 1 rollout
@@ -1078,7 +1078,7 @@ class RayPPOTrainer:
                         sid = parent_vid
                         
                         # Calculate adaptive n(s_t) BEFORE rollout
-                        nk = self._compute_adaptive_n(sid, self.global_step, entropy=1.0)
+                        nk = self._compute_adaptive_n(sid, self.global_step)
                         
                         # Use only nk workers
                         for g_idx in range(nk):
@@ -1106,7 +1106,7 @@ class RayPPOTrainer:
                     for k in active_slots:
                         parent = active_parents[k]
                         sid = parent["visual_history"][-1]
-                        nk = self._compute_adaptive_n(sid, self.global_step, entropy=1.0)
+                        nk = self._compute_adaptive_n(sid, self.global_step)
                         parent_vids.extend([sid] * nk)
                         
                     step_batch = self.run_3spo_step(current_depth, env_outputs, round_task_configs, active_workers, parent_vids, child_vids, {})
@@ -1116,7 +1116,7 @@ class RayPPOTrainer:
                     for k in active_slots:
                         parent = active_parents[k]
                         sid = parent["visual_history"][-1]
-                        nk = self._compute_adaptive_n(sid, self.global_step, entropy=1.0)
+                        nk = self._compute_adaptive_n(sid, self.global_step)
                         
                         slot_outputs = env_outputs[output_idx : output_idx + nk]
                         slot_child_vids = child_vids[output_idx : output_idx + nk]
