@@ -6,8 +6,8 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=24
 #SBATCH --mem=256G
-#SBATCH --output=logs/eval_%j.out
-#SBATCH --error=logs/eval_%j.err
+#SBATCH --output=/public/home/xlwang/genalyu/3SPO/logs/eval_%j.out
+#SBATCH --error=/public/home/xlwang/genalyu/3SPO/logs/eval_%j.err
 
 source ~/.bashrc
 # --- 关键：环境初始化 (Conda 激活) ---
