@@ -1,7 +1,7 @@
 #!/bin/bash
 
-model=PATH_TO_MODEL
-model_name=ui-tars
+model=/public/home/xlwang/genalyu/models/Qwen2.5-VL-7B-Instruct
+model_name=qwen2-5-vl-7b
 num_images=16
 
 port=9000
