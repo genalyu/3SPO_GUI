@@ -25,10 +25,18 @@ cd /public/home/xlwang/genalyu/3SPO  # 替换为你的真实绝对路径
 echo "Starting model server..."
 # 注意：在 Slurm 内部不需要 nohup，因为整个脚本就是在后台运行的
 # 但为了让它在后台跑，我们用 & 并记录 PID
-bash start_server.sh &
+bash start_server.sh > logs/vllm_debug.log 2>&1 &
 SERVER_PID=$!
-sleep 60  # 等待模型完全加载到 8 张显卡中
-
+echo "Waiting for vLLM to be ready..."
+for i in {1..50}; do
+    # 假设你的 vLLM 跑在 9000 端口
+    if curl -s http://127.0.0.1:9000/v1/models > /dev/null; then
+        echo "vLLM is READY!"
+        break
+    fi
+    echo "Wait $i: Server not ready yet..."
+    sleep 10
+done
 # --- 步骤 2: 运行 OSWorld 评估脚本 ---
 echo "Starting OSWorld evaluation..."
 cd OSWorld
