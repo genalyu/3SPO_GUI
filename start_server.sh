@@ -17,7 +17,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Start processes
-for i in {0..3}; do
+for i in {0..7}; do
     CUDA_VISIBLE_DEVICES=$i python -m vllm.entrypoints.openai.api_server \
         --served-model-name $model_name \
         --model $model \
