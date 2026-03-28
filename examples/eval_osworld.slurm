@@ -4,7 +4,7 @@
 #SBATCH --nodes=1                 # 1 个节点即可
 #SBATCH --gres=gpu:8              # 评估通常需要多张卡来跑 vLLM
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=64
+#SBATCH --cpus-per-task=48
 #SBATCH --mem=500G
 #SBATCH --output=logs/eval_%j.out
 #SBATCH --error=logs/eval_%j.err
