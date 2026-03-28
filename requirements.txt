@@ -1,5 +1,4 @@
 numpy
-wandb
 tqdm
 accelerate==1.4.0
 codetiming==1.4.0

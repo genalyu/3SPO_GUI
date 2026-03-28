@@ -1,0 +1,976 @@
+INFO 03-28 13:29:09 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:29:09 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:29:09 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:29:09 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:29:09 api_server.py:913] args: Namespace(host=None, port=9006, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+INFO 03-28 13:29:09 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:29:09 api_server.py:912] vLLM API server version 0.7.3
+WARNING 03-28 13:29:09 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:29:09 api_server.py:913] args: Namespace(host=None, port=9000, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+INFO 03-28 13:29:09 api_server.py:913] args: Namespace(host=None, port=9002, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:29:09 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+WARNING 03-28 13:29:09 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:29:09 api_server.py:209] Started engine process with PID 104771
+INFO 03-28 13:29:09 api_server.py:209] Started engine process with PID 104772
+INFO 03-28 13:29:09 api_server.py:209] Started engine process with PID 104773
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    uvloop.run(run_server(args))
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:09 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:29:09 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:29:09 api_server.py:913] args: Namespace(host=None, port=9005, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:29:09 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:29:09 api_server.py:209] Started engine process with PID 104775
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+INFO 03-28 13:29:09 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:10 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:29:10 api_server.py:913] args: Namespace(host=None, port=9001, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:29:10 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:29:10 api_server.py:209] Started engine process with PID 104777
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:10 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:29:10 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:29:10 api_server.py:913] args: Namespace(host=None, port=9004, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:29:10 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:29:10 api_server.py:209] Started engine process with PID 104779
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:10 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:29:10 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:29:10 api_server.py:913] args: Namespace(host=None, port=9007, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:29:10 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:29:10 api_server.py:209] Started engine process with PID 104781
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:10 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:29:10 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:29:10 api_server.py:913] args: Namespace(host=None, port=9003, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:29:10 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:29:10 api_server.py:209] Started engine process with PID 104786
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:19 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:29:19 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:29:19 engine.py:400] Failed to infer device type
+ERROR 03-28 13:29:19 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:29:19 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:29:19 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:29:19 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:29:19 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:29:19 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:19 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:29:19 engine.py:400] Failed to infer device type
+ERROR 03-28 13:29:19 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:29:19 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:29:19 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:29:19 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:29:19 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:29:19 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+ERROR 03-28 13:29:19 engine.py:400] Failed to infer device type
+ERROR 03-28 13:29:19 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:29:19 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:29:19 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:29:19 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:29:19 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:29:19 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:19 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:29:19 engine.py:400] Failed to infer device type
+ERROR 03-28 13:29:19 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:29:19 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:29:19 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:29:19 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:29:19 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:29:19 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:19 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:29:19 engine.py:400] Failed to infer device type
+ERROR 03-28 13:29:19 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:29:19 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:29:19 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:29:19 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:29:19 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:29:19 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:19 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:29:19 engine.py:400] Failed to infer device type
+ERROR 03-28 13:29:19 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:29:19 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:29:19 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:29:19 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:29:19 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:29:19 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:19 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:29:19 engine.py:400] Failed to infer device type
+ERROR 03-28 13:29:19 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:29:19 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:29:19 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:29:19 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:29:19 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:29:19 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:29:19 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:29:20 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:29:20 engine.py:400] Failed to infer device type
+ERROR 03-28 13:29:20 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:29:20 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:29:20 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:29:20 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:29:20 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:29:20 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:29:20 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:29:20 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:29:20 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:29:20 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:18 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:31:18 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:31:18 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:31:18 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:31:18 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:31:18 api_server.py:913] args: Namespace(host=None, port=9002, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:31:18 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:31:18 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:31:18 api_server.py:913] args: Namespace(host=None, port=9003, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+INFO 03-28 13:31:18 api_server.py:912] vLLM API server version 0.7.3
+WARNING 03-28 13:31:18 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:31:18 api_server.py:913] args: Namespace(host=None, port=9001, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:31:18 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:31:18 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:31:18 api_server.py:913] args: Namespace(host=None, port=9004, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:31:18 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:31:18 api_server.py:209] Started engine process with PID 107428
+INFO 03-28 13:31:18 api_server.py:209] Started engine process with PID 107429
+INFO 03-28 13:31:18 api_server.py:209] Started engine process with PID 107427
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    return _run_code(code, main_globals, None,
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:18 api_server.py:209] Started engine process with PID 107431
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+INFO 03-28 13:31:18 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:18 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:31:18 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:31:18 api_server.py:913] args: Namespace(host=None, port=9007, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:31:18 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:31:18 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:31:18 api_server.py:913] args: Namespace(host=None, port=9006, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:31:18 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:31:18 api_server.py:209] Started engine process with PID 107433
+INFO 03-28 13:31:18 api_server.py:209] Started engine process with PID 107435
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:18 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:31:18 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:31:18 api_server.py:913] args: Namespace(host=None, port=9000, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:31:18 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:31:18 api_server.py:209] Started engine process with PID 107437
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:18 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:31:18 api_server.py:912] vLLM API server version 0.7.3
+INFO 03-28 13:31:18 api_server.py:913] args: Namespace(host=None, port=9005, uvicorn_log_level='info', allow_credentials=False, allowed_origins=['*'], allowed_methods=['*'], allowed_headers=['*'], api_key=None, lora_modules=None, prompt_adapters=None, chat_template=None, chat_template_content_format='auto', response_role='assistant', ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_cert_reqs=0, root_path=None, middleware=[], return_tokens_as_token_ids=False, disable_frontend_multiprocessing=False, enable_request_id_headers=False, enable_auto_tool_choice=False, enable_reasoning=False, reasoning_parser=None, tool_call_parser=None, tool_parser_plugin='', model='PATH_TO_MODEL', task='auto', tokenizer=None, skip_tokenizer_init=False, revision=None, code_revision=None, tokenizer_revision=None, tokenizer_mode='auto', trust_remote_code=False, allowed_local_media_path=None, download_dir=None, load_format='auto', config_format=<ConfigFormat.AUTO: 'auto'>, dtype='auto', kv_cache_dtype='auto', max_model_len=None, guided_decoding_backend='xgrammar', logits_processor_pattern=None, model_impl='auto', distributed_executor_backend=None, pipeline_parallel_size=1, tensor_parallel_size=1, max_parallel_loading_workers=None, ray_workers_use_nsight=False, block_size=None, enable_prefix_caching=None, disable_sliding_window=False, use_v2_block_manager=True, num_lookahead_slots=0, seed=0, swap_space=4, cpu_offload_gb=0, gpu_memory_utilization=0.9, num_gpu_blocks_override=None, max_num_batched_tokens=None, max_num_partial_prefills=1, max_long_partial_prefills=1, long_prefill_token_threshold=0, max_num_seqs=None, max_logprobs=20, disable_log_stats=False, quantization=None, rope_scaling=None, rope_theta=None, hf_overrides=None, enforce_eager=False, max_seq_len_to_capture=8192, disable_custom_all_reduce=False, tokenizer_pool_size=0, tokenizer_pool_type='ray', tokenizer_pool_extra_config=None, limit_mm_per_prompt={'image': 16}, mm_processor_kwargs=None, disable_mm_preprocessor_cache=False, enable_lora=False, enable_lora_bias=False, max_loras=1, max_lora_rank=16, lora_extra_vocab_size=256, lora_dtype='auto', long_lora_scaling_factors=None, max_cpu_loras=None, fully_sharded_loras=False, enable_prompt_adapter=False, max_prompt_adapters=1, max_prompt_adapter_token=0, device='auto', num_scheduler_steps=1, multi_step_stream_outputs=True, scheduler_delay_factor=0.0, enable_chunked_prefill=None, speculative_model=None, speculative_model_quantization=None, num_speculative_tokens=None, speculative_disable_mqa_scorer=False, speculative_draft_tensor_parallel_size=None, speculative_max_model_len=None, speculative_disable_by_batch_size=None, ngram_prompt_lookup_max=None, ngram_prompt_lookup_min=None, spec_decoding_acceptance_method='rejection_sampler', typical_acceptance_sampler_posterior_threshold=None, typical_acceptance_sampler_posterior_alpha=None, disable_logprobs_during_spec_decoding=None, model_loader_extra_config=None, ignore_patterns=[], preemption_mode=None, served_model_name=['ui-tars'], qlora_adapter_name_or_path=None, otlp_traces_endpoint=None, collect_detailed_traces=None, disable_async_output_proc=False, scheduling_policy='fcfs', scheduler_cls='vllm.core.scheduler.Scheduler', override_neuron_config=None, override_pooler_config=None, compilation_config=None, kv_transfer_config=None, worker_cls='auto', generation_config=None, override_generation_config=None, enable_sleep_mode=False, calculate_kv_scales=False, additional_config=None, disable_log_requests=False, max_log_len=None, disable_fastapi_docs=False, enable_prompt_tokens_details=False)
+WARNING 03-28 13:31:18 utils.py:2057] Found ulimit of 1024 and failed to automatically increasewith error current limit exceeds maximum limit. This can cause fd limit errors like`OSError: [Errno 24] Too many open files`. Consider increasing with ulimit -n
+INFO 03-28 13:31:18 api_server.py:209] Started engine process with PID 107439
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 991, in <module>
+    uvloop.run(run_server(args))
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 69, in run
+    return loop.run_until_complete(wrapper())
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/uvloop/__init__.py", line 48, in wrapper
+    return await main
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 947, in run_server
+    async with build_async_engine_client(args) as engine_client:
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 139, in build_async_engine_client
+    async with build_async_engine_client_from_engine_args(
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/contextlib.py", line 199, in __aenter__
+    return await anext(self.gen)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/entrypoints/openai/api_server.py", line 220, in build_async_engine_client_from_engine_args
+    engine_config = engine_args.create_engine_config()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:27 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+INFO 03-28 13:31:27 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:31:27 engine.py:400] Failed to infer device type
+ERROR 03-28 13:31:27 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:31:27 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:31:27 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:31:27 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:31:27 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:31:27 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:31:27 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:31:27 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:31:27 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:31:27 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+ERROR 03-28 13:31:27 engine.py:400] Failed to infer device type
+ERROR 03-28 13:31:27 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:31:27 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:31:27 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:31:27 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:31:27 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:31:27 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:31:27 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:31:27 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:31:27 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:31:27 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:28 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:31:28 engine.py:400] Failed to infer device type
+ERROR 03-28 13:31:28 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:31:28 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:31:28 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:31:28 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:31:28 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:31:28 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:28 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:31:28 engine.py:400] Failed to infer device type
+ERROR 03-28 13:31:28 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:31:28 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:31:28 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:31:28 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:31:28 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:31:28 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:28 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:31:28 engine.py:400] Failed to infer device type
+ERROR 03-28 13:31:28 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:31:28 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:31:28 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:31:28 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:31:28 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:31:28 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:28 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:31:28 engine.py:400] Failed to infer device type
+ERROR 03-28 13:31:28 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:31:28 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:31:28 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:31:28 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:31:28 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:31:28 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:28 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:31:28 engine.py:400] Failed to infer device type
+ERROR 03-28 13:31:28 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:31:28 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:31:28 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:31:28 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:31:28 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:31:28 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
+INFO 03-28 13:31:28 __init__.py:211] No platform detected, vLLM is running on UnspecifiedPlatform
+ERROR 03-28 13:31:28 engine.py:400] Failed to infer device type
+ERROR 03-28 13:31:28 engine.py:400] Traceback (most recent call last):
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+ERROR 03-28 13:31:28 engine.py:400]     engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+ERROR 03-28 13:31:28 engine.py:400]     engine_config = engine_args.create_engine_config(usage_context)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+ERROR 03-28 13:31:28 engine.py:400]     device_config = DeviceConfig(device=self.device)
+ERROR 03-28 13:31:28 engine.py:400]   File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+ERROR 03-28 13:31:28 engine.py:400]     raise RuntimeError("Failed to infer device type")
+ERROR 03-28 13:31:28 engine.py:400] RuntimeError: Failed to infer device type
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 402, in run_mp_engine
+    raise e
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 391, in run_mp_engine
+    engine = MQLLMEngine.from_engine_args(engine_args=engine_args,
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/multiprocessing/engine.py", line 119, in from_engine_args
+    engine_config = engine_args.create_engine_config(usage_context)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/engine/arg_utils.py", line 1126, in create_engine_config
+    device_config = DeviceConfig(device=self.device)
+  File "/public/home/xlwang/jyy/anaconda/envs/3spo/lib/python3.10/site-packages/vllm/config.py", line 1660, in __init__
+    raise RuntimeError("Failed to infer device type")
+RuntimeError: Failed to infer device type
