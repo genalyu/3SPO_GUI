@@ -9,6 +9,7 @@
 #SBATCH --output=logs/eval_%j.out
 #SBATCH --error=logs/eval_%j.err
 
+source ~/.bashrc
 # --- 关键：环境初始化 (Conda 激活) ---
 # 1. 显式加载 Conda 的基础配置
 source /public/home/xlwang/jyy/anaconda/etc/profile.d/conda.sh  # 路径根据你安装 anaconda/miniconda 的位置修改
