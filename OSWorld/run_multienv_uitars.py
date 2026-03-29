@@ -361,7 +361,7 @@ def get_result(action_space, use_model, observation_type, result_dir, trial_id, 
 if __name__ == "__main__":
     ####### The complete version of the list of examples #######
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    os.environ["OSWORLD_SIF_IMAGE"] = "/public/home/xlwang/genalyu/3SPO/osworld-docker.sif"
+    os.environ["OSWORLD_SIF_IMAGE"] = "/public/home/xlwang/genalyu/3SPO/osworld-sandbox"
     args = config()
 
     with open(args.test_all_meta_path, "r", encoding="utf-8") as f:

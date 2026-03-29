@@ -136,9 +136,12 @@ class SingularityProvider(Provider):
                 if not os.path.exists(self.sif_image):
                     raise FileNotFoundError(f"SIF image not found: {self.sif_image}")
 
-                # Create a fake 'id' command to bypass root checks inside container
-                # This is necessary because some scripts inside the docker image check for UID 0
+                # Create temporary directories for system paths to allow writes
                 temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
+                run_dir = temp_dir / f"singularity_run_{os.getpid()}"
+                run_dir.mkdir(parents=True, exist_ok=True)
+
+                # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = temp_dir / f"fake_id_{os.getpid()}"
                 with open(fake_id_path, "w") as f:
                     f.write("#!/bin/sh\necho 0\n")
@@ -168,9 +171,11 @@ class SingularityProvider(Provider):
                 cmd = [
                     "singularity", "run",
                     "--nv", 
-                    "--writable-tmpfs", # Allow internal writes
-                    "--bind", f"{fake_id_path}:/usr/bin/id", # THE TRICK: Bypass root check
-                    "--bind", f"{fake_id_path}:/bin/id",      # Double insurance
+                    "--writable-tmpfs", 
+                    "--bind", f"{run_dir}:/run",       # Make /run writable
+                    "--bind", f"{run_dir}:/var/run",   # Make /var/run writable
+                    "--bind", f"{fake_id_path}:/usr/bin/id",
+                    "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
                     self.sif_image
@@ -185,9 +190,9 @@ class SingularityProvider(Provider):
                     preexec_fn=os.setsid 
                 )
 
-                # Cleanup the fake_id script after a short delay to ensure it's bound
-                # Actually, better keep it until stop_emulator
+                # Store for cleanup
                 self.fake_id_path = fake_id_path
+                self.run_dir = run_dir
 
             # Wait for VM to be ready
             self._wait_for_vm_ready()
