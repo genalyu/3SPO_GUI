@@ -22,6 +22,7 @@ for i in {0..0}; do
         --served-model-name $model_name \
         --model $model \
         --limit-mm-per-prompt image=$num_images \
+        --max-model-len 32768 \
         -tp=1 \
         --port $((9000 + i)) &
 done

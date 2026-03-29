@@ -25,7 +25,7 @@ cd /public/home/xlwang/genalyu/3SPO  # 替换为你的真实绝对路径
 echo "Starting model server..."
 # 注意：在 Slurm 内部不需要 nohup，因为整个脚本就是在后台运行的
 # 但为了让它在后台跑，我们用 & 并记录 PID
-bash start_server.sh > logs/vllm_debug.log 2>&1 &
+bash start_server.sh > logs/vllm_debug_%j.log 2>&1 &
 SERVER_PID=$!
 echo "Waiting for vLLM to be ready..."
 for i in {1..50}; do
@@ -53,6 +53,7 @@ python run_multienv_uitars.py \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
+    --path_to_vm /public/home/xlwang/genalyu/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2 \
     --server_ip http://127.0.0.1
 
 # --- 步骤 3: 清理 ---

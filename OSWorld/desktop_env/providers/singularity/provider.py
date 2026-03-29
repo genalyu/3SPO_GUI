@@ -40,22 +40,47 @@ class SingularityProvider(Provider):
 
         temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
         self.lock_file = temp_dir / "singularity_port_allocation.lck"
+        self.port_registry_dir = temp_dir / "singularity_port_registry"
+        self.port_registry_dir.mkdir(parents=True, exist_ok=True)
         self.lock_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Default SIF image path, can be overridden by environment variable
         self.sif_image = os.getenv("OSWORLD_SIF_IMAGE", "osworld-docker.sif")
 
     def _get_used_ports(self):
-        """Get all currently used ports on the system."""
-        # Singularity uses host network by default, so we only need to check system ports
-        return set(conn.laddr.port for conn in psutil.net_connections())
+        """Get all currently used ports and reserved ports."""
+        system_ports = set(conn.laddr.port for conn in psutil.net_connections())
+        # Also check our internal registry for ports reserved by other processes
+        reserved_ports = set()
+        for p_file in self.port_registry_dir.glob("port_*"):
+            try:
+                reserved_ports.add(int(p_file.name.split("_")[1]))
+            except:
+                pass
+        return system_ports | reserved_ports
+
+    def _reserve_port(self, port):
+        """Mark a port as reserved."""
+        (self.port_registry_dir / f"port_{port}").touch()
+
+    def _release_ports(self):
+        """Release all ports reserved by this instance."""
+        for port in [self.vnc_port, self.server_port, self.chromium_port, self.vlc_port]:
+            if port:
+                p_file = self.port_registry_dir / f"port_{port}"
+                if p_file.exists():
+                    try:
+                        p_file.unlink()
+                    except:
+                        pass
 
     def _get_available_port(self, start_port: int) -> int:
-        """Find next available port starting from start_port."""
+        """Find next available port and reserve it."""
         used_ports = self._get_used_ports()
         port = start_port
         while port < 65354:
             if port not in used_ports:
+                self._reserve_port(port)
                 return port
             port += 1
         raise PortAllocationError(f"No available ports found starting from {start_port}")
@@ -163,6 +188,7 @@ class SingularityProvider(Provider):
                     os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
             finally:
                 self.process = None
+                self._release_ports() # Release reserved ports
                 self.server_port = None
                 self.vnc_port = None
                 self.chromium_port = None
