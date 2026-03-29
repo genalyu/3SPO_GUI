@@ -158,6 +158,7 @@ class SingularityProvider(Provider):
                 cmd = [
                     "singularity", "run",
                     "--nv", 
+                    "--fakeroot",      # Allow root operations inside container
                     "--writable-tmpfs", # Allow internal writes
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
