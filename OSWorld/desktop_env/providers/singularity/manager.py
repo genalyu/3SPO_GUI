@@ -8,25 +8,25 @@ class SingularityVMManager(VMManager):
     def __init__(self, registry_path=""):
         pass
 
-    def initialize_registry(self, **kwargs):
+    def initialize_registry(self, *args, **kwargs):
         pass
 
-    def add_vm(self, vm_path, **kwargs):
+    def add_vm(self, vm_path, *args, **kwargs):
         pass
 
-    def delete_vm(self, vm_path, **kwargs):
+    def delete_vm(self, vm_path, *args, **kwargs):
         pass
 
-    def occupy_vm(self, vm_path, pid, **kwargs):
+    def occupy_vm(self, vm_path, *args, **kwargs):
         pass
 
-    def list_free_vms(self, **kwargs):
+    def list_free_vms(self, *args, **kwargs):
         return []
 
-    def check_and_clean(self, **kwargs):
+    def check_and_clean(self, *args, **kwargs):
         pass
 
-    def get_vm_path(self, **kwargs):
+    def get_vm_path(self, *args, **kwargs):
         # For Singularity, we usually pass the path directly via command line
         # This is a fallback if no path is provided
         return ""
