@@ -47,7 +47,7 @@ python run_multienv_uitars.py \
     --max_steps 15 \
     --max_trajectory_length 15 \
     --temperature 0.6 \
-    --model qwen2-5-vl-7b\
+    --model qwen2-5-vl-3b\
     --action_space pyautogui \
     --num_envs 8 \
     --result_dir ./results/ \
