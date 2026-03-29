@@ -184,9 +184,13 @@ def run_env_tasks(env_idx: int, env: DesktopEnv, agent, env_tasks: dict, args: a
                 )
             except Exception as e:
                 logger.error(f"Exception in Env{env_idx+1} {domain}/{example_id}: {e}")
-                env.controller.end_recording(
-                    os.path.join(example_result_dir, "recording.mp4")
-                )
+                if hasattr(env, 'controller') and env.controller is not None:
+                    try:
+                        env.controller.end_recording(
+                            os.path.join(example_result_dir, "recording.mp4")
+                        )
+                    except:
+                        pass
                 with open(os.path.join(example_result_dir, "traj.jsonl"), "a") as f:
                     f.write(
                         json.dumps(

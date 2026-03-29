@@ -90,10 +90,18 @@ class SingularityProvider(Provider):
         start_time = time.time()
         
         def check_screenshot():
+            # Check if the process is still alive
+            if self.process and self.process.poll() is not None:
+                # Process has exited, read error output
+                stdout, stderr = self.process.communicate()
+                error_msg = stderr.decode() if stderr else "No error message"
+                logger.error(f"Singularity process died. Error: {error_msg}")
+                raise RuntimeError(f"Singularity process died: {error_msg}")
+
             try:
                 response = requests.get(
                     f"http://localhost:{self.server_port}/screenshot",
-                    timeout=(10, 10)
+                    timeout=(5, 5)
                 )
                 return response.status_code == 200
             except Exception:
@@ -102,8 +110,13 @@ class SingularityProvider(Provider):
         while time.time() - start_time < timeout:
             if check_screenshot():
                 return True
-            logger.info("Checking if virtual machine is ready...")
+            # logger.info("Checking if virtual machine is ready...")
             time.sleep(RETRY_INTERVAL)
+        
+        # If we reach here, it timed out. Let's see what's in the stderr
+        if self.process:
+            # We don't want to block here, but we need some info
+            logger.error("Timeout reached. Singularity process is still running but not responding.")
         
         raise TimeoutError("VM failed to become ready within timeout period")
 
@@ -113,24 +126,32 @@ class SingularityProvider(Provider):
         
         try:
             with lock:
+                # Add a bit of jitter based on process PID to avoid exact same timing
+                import random
+                time.sleep(random.uniform(0, 1))
+
                 # Allocate all required ports
-                self.vnc_port = self._get_available_port(8006)
-                self.server_port = self._get_available_port(5000)
-                self.chromium_port = self._get_available_port(9222)
-                self.vlc_port = self._get_available_port(8080)
+                self.vnc_port = self._get_available_port(8006 + (os.getpid() % 100))
+                self.server_port = self._get_available_port(5000 + (os.getpid() % 100))
+                self.chromium_port = self._get_available_port(9222 + (os.getpid() % 100))
+                self.vlc_port = self._get_available_port(8080 + (os.getpid() % 100))
 
                 if not os.path.exists(self.sif_image):
-                    raise FileNotFoundError(f"Singularity image not found at {self.sif_image}. "
-                                            f"Please set OSWORLD_SIF_IMAGE environment variable or "
-                                            f"place the SIF file in the current directory.")
+                    raise FileNotFoundError(f"Singularity image not found at {self.sif_image}.")
 
-                # Singularity run command
-                # We bind the VM path to /System.qcow2 as expected by the container
-                # We pass the allocated ports via environment variables
-                # Note: This assumes the container's entrypoint script respects these environment variables
+                # Check if /dev/kvm exists
+                kvm_flag = []
+                if os.path.exists("/dev/kvm"):
+                    kvm_flag = ["--bind", "/dev/kvm:/dev/kvm"]
+
                 env = os.environ.copy()
                 env.update(self.environment)
+                # Ensure these are passed to the container
                 env.update({
+                    "SINGULARITYENV_VNC_PORT": str(self.vnc_port),
+                    "SINGULARITYENV_SERVER_PORT": str(self.server_port),
+                    "SINGULARITYENV_CHROMIUM_PORT": str(self.chromium_port),
+                    "SINGULARITYENV_VLC_PORT": str(self.vlc_port),
                     "VNC_PORT": str(self.vnc_port),
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
@@ -139,18 +160,21 @@ class SingularityProvider(Provider):
 
                 cmd = [
                     "singularity", "run",
-                    "--nv", # Use GPU if available
+                    "--nv", 
+                    "--containall", # Better isolation
+                    "--writable-tmpfs", # Allow writing to /tmp inside container
+                    *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
                     self.sif_image
                 ]
 
-                logger.info(f"Starting Singularity container: {' '.join(cmd)}")
+                logger.info(f"Starting Singularity: {' '.join(cmd)}")
                 self.process = subprocess.Popen(
                     cmd,
                     env=env,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    preexec_fn=os.setsid # Create a new process group to kill it properly
+                    preexec_fn=os.setsid 
                 )
 
             logger.info(f"Started Singularity container with ports - VNC: {self.vnc_port}, "
