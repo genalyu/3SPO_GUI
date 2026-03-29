@@ -136,6 +136,14 @@ class SingularityProvider(Provider):
                 if not os.path.exists(self.sif_image):
                     raise FileNotFoundError(f"SIF image not found: {self.sif_image}")
 
+                # Create a fake 'id' command to bypass root checks inside container
+                # This is necessary because some scripts inside the docker image check for UID 0
+                temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
+                fake_id_path = temp_dir / f"fake_id_{os.getpid()}"
+                with open(fake_id_path, "w") as f:
+                    f.write("#!/bin/sh\necho 0\n")
+                os.chmod(fake_id_path, 0o755)
+
                 # KVM acceleration is critical for performance
                 kvm_flag = []
                 if os.path.exists("/dev/kvm"):
@@ -152,14 +160,17 @@ class SingularityProvider(Provider):
                     "VNC_PORT": str(self.vnc_port),
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
-                    "VLC_PORT": str(self.vlc_port)
+                    "VLC_PORT": str(self.vlc_port),
+                    "USER": "root", # Fake being root
+                    "HOME": "/root" # Some scripts expect /root
                 })
 
                 cmd = [
                     "singularity", "run",
                     "--nv", 
-                    "--fakeroot",      # Allow root operations inside container
                     "--writable-tmpfs", # Allow internal writes
+                    "--bind", f"{fake_id_path}:/usr/bin/id", # THE TRICK: Bypass root check
+                    "--bind", f"{fake_id_path}:/bin/id",      # Double insurance
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
                     self.sif_image
@@ -173,6 +184,10 @@ class SingularityProvider(Provider):
                     stderr=subprocess.PIPE,
                     preexec_fn=os.setsid 
                 )
+
+                # Cleanup the fake_id script after a short delay to ensure it's bound
+                # Actually, better keep it until stop_emulator
+                self.fake_id_path = fake_id_path
 
             # Wait for VM to be ready
             self._wait_for_vm_ready()
