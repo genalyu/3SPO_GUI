@@ -14,6 +14,18 @@ echo "User: $(whoami)"
 echo "Kernel: $(uname -r)"
 echo "Uptime: $(uptime)"
 
+echo "Checking KVM acceleration..."
+if [ -e /dev/kvm ]; then
+    echo "KVM device exists."
+    if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+        echo "KVM permissions are CORRECT."
+    else
+        echo "KVM permissions are MISSING for user $USER."
+        echo "Try adding '--bind /dev/kvm' to Singularity or contact admin."
+    fi
+else
+    echo "KVM device NOT FOUND. Expect extremely slow performance."
+fi
 echo -e "\n--- Checking KVM ---"
 ls -l /dev/kvm
 [ -w /dev/kvm ] && echo "KVM Access: YES" || echo "KVM Access: NO (CRITICAL)"
