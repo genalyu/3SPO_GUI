@@ -170,10 +170,12 @@ class SingularityProvider(Provider):
 
                 cmd = [
                     "singularity", "run",
+                    "--containall",
+                    "--network=host",
                     "--nv", 
                     "--writable-tmpfs", 
-                    "--bind", f"{run_dir}:/run",       # Make /run writable
-                    "--bind", f"{run_dir}:/var/run",   # Make /var/run writable
+                    "--bind", f"{run_dir}:/run",
+                    "--bind", f"{run_dir}:/var/run",
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
@@ -221,22 +223,41 @@ class SingularityProvider(Provider):
 
     def stop_emulator(self, path_to_vm: str):
         if self.process:
-            logger.info("Stopping Singularity container...")
+            logger.info(f"Stopping Singularity container (PID: {self.process.pid})...")
             try:
                 import signal
+                # First, try to terminate the whole process group gracefully
                 os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
                 self.process.wait(timeout=WAIT_TIME)
+            except (ProcessLookupError, OSError):
+                pass # Process already gone
             except Exception as e:
-                logger.error(f"Error stopping Singularity process: {e}")
-                if self.process:
+                logger.error(f"Error stopping Singularity process group: {e}. Trying SIGKILL...")
+                try:
                     os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
+                except (ProcessLookupError, OSError):
+                    pass # Process already gone
             finally:
                 self.process = None
-                self._release_ports() # Release reserved ports
-                self.server_port = None
-                self.vnc_port = None
-                self.chromium_port = None
-                self.vlc_port = None
+        
+        # Cleanup regardless of process state
+        self._release_ports()
+        if hasattr(self, 'fake_id_path') and self.fake_id_path.exists():
+            try:
+                self.fake_id_path.unlink()
+            except:
+                pass
+        if hasattr(self, 'run_dir') and self.run_dir.exists():
+            try:
+                import shutil
+                shutil.rmtree(self.run_dir)
+            except:
+                pass
+
+        self.server_port = None
+        self.vnc_port = None
+        self.chromium_port = None
+        self.vlc_port = None
     
     def pause_emulator(self):
         # Singularity doesn't have a direct pause command like Docker
