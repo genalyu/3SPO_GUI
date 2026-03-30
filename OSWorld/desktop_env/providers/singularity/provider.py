@@ -85,7 +85,7 @@ class SingularityProvider(Provider):
             port += 1
         raise PortAllocationError(f"No available ports found starting from {start_port}")
 
-    def _wait_for_vm_ready(self, timeout: int = 1000):
+    def _wait_for_vm_ready(self, timeout: int = 1400):
         """Wait for VM to be ready by checking screenshot endpoint."""
         # Use longer timeout for software emulation mode (no KVM)
         start_time = time.time()
