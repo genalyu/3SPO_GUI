@@ -21,6 +21,38 @@ conda activate 3spo
 # 3. 确保当前目录在项目根目录
 cd /public/home/xlwang/genalyu/3SPO  # 替换为你的真实绝对路径
 
+echo "Checking KVM acceleration..."
+if [ -e /dev/kvm ]; then
+    echo "KVM device exists."
+    if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+        echo "KVM permissions are CORRECT."
+    else
+        echo "KVM permissions are MISSING for user $USER."
+        echo "Try adding '--bind /dev/kvm' to Singularity or contact admin."
+    fi
+else
+    echo "KVM device NOT FOUND. Expect extremely slow performance."
+fi
+# --- 步骤 0: 环境强力清理与本地化 I/O ---
+echo "Cleaning up previous zombie processes..."
+pkill -9 -u $USER -f singularity || true
+pkill -9 -u $USER -f qemu || true
+sleep 2
+
+
+LOCAL_WORK_DIR="/tmp/$USER/osworld_runtime_$SLURM_JOB_ID"
+mkdir -p "$LOCAL_WORK_DIR"
+
+echo "Using Local Work Directory: $LOCAL_WORK_DIR"
+REMOTE_IMAGE="/public/home/xlwang/genalyu/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
+LOCAL_IMAGE="$LOCAL_WORK_DIR/Ubuntu.qcow2"
+
+echo "Copying image to local SSD for maximum I/O performance..."
+cp "$REMOTE_IMAGE" "$LOCAL_IMAGE"
+
+# 清理过往残留的临时文件
+rm -rf /tmp/fake_id_* /tmp/singularity_run_* 2>/dev/null || true
+
 # --- 步骤 1: 启动模型推理服务 ---
 echo "Starting model server..."
 # 注意：在 Slurm 内部不需要 nohup，因为整个脚本就是在后台运行的
@@ -49,13 +81,14 @@ python run_multienv_uitars.py \
     --temperature 0.6 \
     --model qwen2-5-vl-3b\
     --action_space pyautogui \
-    --num_envs 2 \
+    --num_envs 1 \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
-    --path_to_vm /public/home/xlwang/genalyu/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2 \
+    --path_to_vm "$LOCAL_IMAGE" \
     --server_ip http://127.0.0.1
 
 # --- 步骤 3: 清理 ---
-echo "Evaluation finished. Killing model server..."
+echo "Evaluation finished. Killing model server and cleaning local image..."
 kill $SERVER_PID
+rm -rf "$LOCAL_WORK_DIR"

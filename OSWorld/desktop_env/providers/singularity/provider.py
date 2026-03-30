@@ -177,7 +177,8 @@ class SingularityProvider(Provider):
                     "--bind", f"{run_dir}:/var/run",
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
-                    "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2", # Still trying to bind here
+                    *kvm_flag,
+                    "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
                     self.sif_image
                 ]
 
@@ -200,9 +201,6 @@ class SingularityProvider(Provider):
             logger.info(f"Started Singularity container with ports - VNC: {self.vnc_port}, "
                        f"Server: {self.server_port}, Chrome: {self.chromium_port}, VLC: {self.vlc_port}")
 
-            # Wait for VM to be ready
-            self._wait_for_vm_ready()
-
         except Exception as e:
             logger.error(f"Error starting Singularity container: {e}")
             self.stop_emulator(path_to_vm)
@@ -224,17 +222,14 @@ class SingularityProvider(Provider):
             logger.info(f"Stopping Singularity container (PID: {self.process.pid})...")
             try:
                 import signal
-                # First, try to terminate the whole process group gracefully
-                os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
-                self.process.wait(timeout=WAIT_TIME)
+                # Get the process group ID
+                pgid = os.getpgid(self.process.pid)
+                # Force kill the entire process group immediately in software mode
+                # to avoid lingering QEMU processes
+                os.killpg(pgid, signal.SIGKILL)
+                self.process.wait(timeout=1)
             except (ProcessLookupError, OSError):
-                pass # Process already gone
-            except Exception as e:
-                logger.error(f"Error stopping Singularity process group: {e}. Trying SIGKILL...")
-                try:
-                    os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
-                except (ProcessLookupError, OSError):
-                    pass # Process already gone
+                pass
             finally:
                 self.process = None
         
