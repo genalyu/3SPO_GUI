@@ -85,8 +85,9 @@ class SingularityProvider(Provider):
             port += 1
         raise PortAllocationError(f"No available ports found starting from {start_port}")
 
-    def _wait_for_vm_ready(self, timeout: int = 600):
+    def _wait_for_vm_ready(self, timeout: int = 2400):
         """Wait for VM to be ready by checking screenshot endpoint."""
+        # Use longer timeout for software emulation mode (no KVM)
         start_time = time.time()
         
         def check_screenshot():
@@ -170,16 +171,13 @@ class SingularityProvider(Provider):
 
                 cmd = [
                     "singularity", "run",
-                    "--containall",
-                    "--network=host",
                     "--nv", 
                     "--writable-tmpfs", 
                     "--bind", f"{run_dir}:/run",
                     "--bind", f"{run_dir}:/var/run",
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
-                    *kvm_flag,
-                    "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
+                    "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2", # Still trying to bind here
                     self.sif_image
                 ]
 

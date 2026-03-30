@@ -4,8 +4,8 @@
 #SBATCH --nodes=1                 # 4 个节点即可
 #SBATCH --gres=gpu:2              # 评估通常需要多张卡来跑 vLLM
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=24
-#SBATCH --mem=256G
+#SBATCH --cpus-per-task=48
+#SBATCH --mem=512G
 #SBATCH --output=/public/home/xlwang/genalyu/3SPO/logs/eval_%j.out
 #SBATCH --error=/public/home/xlwang/genalyu/3SPO/logs/eval_%j.err
 
@@ -49,7 +49,7 @@ python run_multienv_uitars.py \
     --temperature 0.6 \
     --model qwen2-5-vl-3b\
     --action_space pyautogui \
-    --num_envs 8 \
+    --num_envs 2 \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
