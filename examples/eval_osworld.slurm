@@ -21,6 +21,17 @@ conda activate 3spo
 # 3. 确保当前目录在项目根目录
 cd /public/home/xlwang/genalyu/3SPO  # 替换为你的真实绝对路径
 
+# --- 强力清理函数 ---
+cleanup() {
+    echo "Caught signal! Cleaning up..."
+    pkill -9 -u $USER -f vllm || true
+    pkill -9 -u $USER -f singularity || true
+    pkill -9 -u $USER -f qemu || true
+    [ -d "$LOCAL_WORK_DIR" ] && rm -rf "$LOCAL_WORK_DIR"
+    echo "Cleanup complete."
+}
+trap cleanup EXIT SIGINT SIGTERM
+
 echo "Checking KVM acceleration..."
 if [ -e /dev/kvm ]; then
     echo "KVM device exists."
@@ -81,7 +92,7 @@ python run_multienv_uitars.py \
     --temperature 0.6 \
     --model qwen2-5-vl-3b\
     --action_space pyautogui \
-    --num_envs 1 \
+    --num_envs 4 \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
@@ -89,6 +100,5 @@ python run_multienv_uitars.py \
     --server_ip http://127.0.0.1
 
 # --- 步骤 3: 清理 ---
-echo "Evaluation finished. Killing model server and cleaning local image..."
-kill $SERVER_PID
-rm -rf "$LOCAL_WORK_DIR"
+echo "Evaluation finished. Final cleanup..."
+cleanup
