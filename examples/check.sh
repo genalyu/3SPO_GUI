@@ -2,6 +2,7 @@
 #SBATCH --job-name=SuperDiag
 #SBATCH --partition=a100
 #SBATCH --nodes=1
+#SBATCH --nodelist=gpu22          # 指定在 gpu22 节点运行
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
