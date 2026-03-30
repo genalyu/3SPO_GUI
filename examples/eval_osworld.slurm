@@ -92,7 +92,7 @@ python run_multienv_uitars.py \
     --temperature 0.6 \
     --model qwen2-5-vl-3b\
     --action_space pyautogui \
-    --num_envs 4 \
+    --num_envs 1 \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
