@@ -2,6 +2,7 @@
 #SBATCH --job-name=osworld_eval
 #SBATCH --partition=a100          # 根据你的分区名修改
 #SBATCH --nodes=1                 # 4 个节点即可
+#SBATCH --nodelist=gpu22          # 指定在 gpu22 节点运行
 #SBATCH --gres=gpu:2              # 评估通常需要多张卡来跑 vLLM
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=24
