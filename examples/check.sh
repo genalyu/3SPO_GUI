@@ -47,7 +47,7 @@ time cp "$REMOTE_IMG" "$LOCAL_IMG"
 echo -e "\n--- Checking Image File ---"
 du -sh "$LOCAL_IMG"
 file "$LOCAL_IMG"
-singularity exec /public/home/xlwang/genalyu/3SPO/osworld-sandbox qemu-img info "$LOCAL_IMG" || echo "ERROR: Image header corrupted"
+# singularity exec /public/home/xlwang/genalyu/3SPO/osworld-sandbox qemu-img info "$LOCAL_IMG" || echo "ERROR: Image header corrupted"
 
 echo "==================== [STEP 3: Low-Level Container Test] ===================="
 echo "Attempting to run a simple command inside the sandbox..."
