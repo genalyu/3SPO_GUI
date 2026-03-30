@@ -171,7 +171,6 @@ class SingularityProvider(Provider):
 
                 cmd = [
                     "singularity", "run",
-                    "--nv", 
                     "--writable-tmpfs", 
                     "--bind", f"{run_dir}:/run",
                     "--bind", f"{run_dir}:/var/run",
