@@ -156,7 +156,7 @@ class SingularityProvider(Provider):
                     logger.info(f"Creating local sandbox copy at {local_sandbox} (this may take a few minutes)...")
                     # Use 'rsync' instead of 'cp -a' to be more robust with symlinks and partial copies
                     temp_copy_path = f"{local_sandbox}.tmp"
-                    subprocess.run(f"rm -rf {temp_copy_path} && mkdir -p {temp_copy_path} && rsync -a --info=progress2 {self.sandbox_path}/ {temp_copy_path}/", shell=True, check=True)
+                    subprocess.run(f"rm -rf {temp_copy_path} && mkdir -p {temp_copy_path} && rsync -a {self.sandbox_path}/ {temp_copy_path}/", shell=True, check=True)
                     (Path(temp_copy_path) / ".copy_complete").touch()
                     os.rename(temp_copy_path, local_sandbox)
                 
