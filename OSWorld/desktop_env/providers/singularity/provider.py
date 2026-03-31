@@ -44,8 +44,8 @@ class SingularityProvider(Provider):
         self.port_registry_dir.mkdir(parents=True, exist_ok=True)
         self.lock_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # Default SIF image path, can be overridden by environment variable
-        self.sif_image = os.getenv("OSWORLD_SIF_IMAGE", "osworld-docker.sif")
+        # Default Sandbox path, can be overridden by environment variable
+        self.sandbox_path = os.getenv("OSWORLD_SANDBOX", "/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
 
     def _get_used_ports(self):
         """Get all currently used ports and reserved ports."""
@@ -134,61 +134,37 @@ class SingularityProvider(Provider):
                 self.chromium_port = self._get_available_port(9222 + (os.getpid() % 100))
                 self.vlc_port = self._get_available_port(8080 + (os.getpid() % 100))
 
-                if not os.path.exists(self.sif_image):
-                    raise FileNotFoundError(f"SIF image not found: {self.sif_image}")
+                if not os.path.exists(self.sandbox_path):
+                    raise FileNotFoundError(f"Sandbox directory not found: {self.sandbox_path}")
 
-                # Create temporary directories for system paths to allow writes
+                # Create a local copy of the sandbox in /tmp for performance and isolation
                 temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
-                run_dir = temp_dir / f"singularity_run_{os.getpid()}"
-                storage_dir = temp_dir / f"singularity_storage_{os.getpid()}"
-                var_dir = temp_dir / f"singularity_var_{os.getpid()}"
-                etc_nginx_dir = temp_dir / f"singularity_nginx_{os.getpid()}"
+                local_sandbox = temp_dir / f"osworld_sandbox_{os.getpid()}"
                 
-                run_dir.mkdir(parents=True, exist_ok=True)
-                storage_dir.mkdir(parents=True, exist_ok=True)
-                var_dir.mkdir(parents=True, exist_ok=True)
-                etc_nginx_dir.mkdir(parents=True, exist_ok=True)
-
-                # Extract all scripts from /run and /var inside the SIF to host to avoid permission issues
-                # Many services (nginx, X11) and the entry.sh script need to write to these directories
-                try:
-                    logger.info(f"Extracting system directories from {self.sif_image} to host...")
-                    # Using tar with --ignore-failed-read to skip system logs/sockets that might have permission issues
-                    subprocess.run(
-                        f"singularity exec {self.sif_image} tar --ignore-failed-read -cf - -C /run . | tar -xf - -C {run_dir}",
-                        shell=True, check=False
-                    )
-                    subprocess.run(
-                        f"singularity exec {self.sif_image} tar --ignore-failed-read -cf - -C /var . | tar -xf - -C {var_dir}",
-                        shell=True, check=False
-                    )
-                    # Also extract nginx config to modify privileged ports
-                    subprocess.run(
-                        f"singularity exec {self.sif_image} tar --ignore-failed-read -cf - -C /etc/nginx . | tar -xf - -C {etc_nginx_dir}",
-                        shell=True, check=False
-                    )
-                    
-                    # Modify nginx config to use dynamically allocated ports and remove 'user' directive
-                    logger.info(f"Modifying nginx config to use ports (API: {self.server_port}, VNC: {self.vnc_port})...")
-                    # Replace port 80 (standard API) with our dynamic server_port
-                    subprocess.run(f"grep -rl \"80\" {etc_nginx_dir} | xargs sed -i 's/listen 80;/listen {self.server_port};/g' 2>/dev/null || true", shell=True)
-                    subprocess.run(f"grep -rl \"80\" {etc_nginx_dir} | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:{self.server_port};/g' 2>/dev/null || true", shell=True)
-                    # Replace port 8006 (standard VNC) with our dynamic vnc_port
-                    subprocess.run(f"grep -rl \"8006\" {etc_nginx_dir} | xargs sed -i 's/8006/{self.vnc_port}/g' 2>/dev/null || true", shell=True)
-                    
-                    if (etc_nginx_dir / "nginx.conf").exists():
-                        subprocess.run(f"sed -i 's/^user /#user /g' {etc_nginx_dir}/nginx.conf", shell=True)
-
-                    # Ensure host-side scripts and service dirs are executable/writable
-                    subprocess.run(f"chmod -R 777 {run_dir} {var_dir} {storage_dir} {etc_nginx_dir}", shell=True)
-                except Exception as e:
-                    logger.warning(f"Failed to extract system directories: {e}. Container may fail to boot.")
-
+                if not local_sandbox.exists():
+                    logger.info(f"Creating local sandbox copy at {local_sandbox} (this may take a few minutes)...")
+                    # Use rsync to copy efficiently
+                    subprocess.run(f"cp -r {self.sandbox_path} {local_sandbox}", shell=True, check=True)
+                
                 # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = temp_dir / f"fake_id_{os.getpid()}"
                 with open(fake_id_path, "w") as f:
                     f.write("#!/bin/sh\necho 0\n")
                 os.chmod(fake_id_path, 0o755)
+
+                # Modify nginx config in the LOCAL sandbox copy for this specific environment
+                nginx_config_path = local_sandbox / "etc/nginx"
+                if nginx_config_path.exists():
+                    logger.info(f"Modifying local nginx config to use ports (API: {self.server_port}, VNC: {self.vnc_port})...")
+                    # Replace port 80 (standard API) with our dynamic server_port
+                    subprocess.run(f"grep -rl \"80\" {nginx_config_path} | xargs sed -i 's/listen 80;/listen {self.server_port};/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"grep -rl \"80\" {nginx_config_path} | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:{self.server_port};/g' 2>/dev/null || true", shell=True)
+                    # Replace port 8006 (standard VNC) with our dynamic vnc_port
+                    subprocess.run(f"grep -rl \"8006\" {nginx_config_path} | xargs sed -i 's/8006/{self.vnc_port}/g' 2>/dev/null || true", shell=True)
+                    
+                    nginx_conf = nginx_config_path / "nginx.conf"
+                    if nginx_conf.exists():
+                        subprocess.run(f"sed -i 's/^user /#user /g' {nginx_conf}", shell=True)
 
                 # KVM acceleration is critical for performance
                 kvm_flag = []
@@ -213,16 +189,12 @@ class SingularityProvider(Provider):
 
                 cmd = [
                     "singularity", "run",
-                    "--writable-tmpfs", 
-                    "--bind", f"{run_dir}:/run", # Bind host temp dir to container's /run
-                    "--bind", f"{storage_dir}:/storage", # Bind host temp dir to container's /storage
-                    "--bind", f"{var_dir}:/var", # Bind host temp dir to container's /var
-                    "--bind", f"{etc_nginx_dir}:/etc/nginx", # Bind host temp dir to container's /etc/nginx
+                    "--writable", # Use the local sandbox with write permissions
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
-                    self.sif_image
+                    str(local_sandbox)
                 ]
 
                 logger.info(f"Starting Singularity (Port {self.server_port}): {' '.join(cmd)}")
@@ -236,10 +208,7 @@ class SingularityProvider(Provider):
 
                 # Store for cleanup
                 self.fake_id_path = fake_id_path
-                self.run_dir = run_dir
-                self.storage_dir = storage_dir
-                self.var_dir = var_dir
-                self.etc_nginx_dir = etc_nginx_dir
+                self.local_sandbox = local_sandbox
 
             # Wait for VM to be ready
             self._wait_for_vm_ready()
@@ -286,28 +255,10 @@ class SingularityProvider(Provider):
                 self.fake_id_path.unlink()
             except:
                 pass
-        if hasattr(self, 'run_dir') and self.run_dir.exists():
+        if hasattr(self, 'local_sandbox') and self.local_sandbox.exists():
             try:
                 import shutil
-                shutil.rmtree(self.run_dir)
-            except:
-                pass
-        if hasattr(self, 'storage_dir') and self.storage_dir.exists():
-            try:
-                import shutil
-                shutil.rmtree(self.storage_dir)
-            except:
-                pass
-        if hasattr(self, 'var_dir') and self.var_dir.exists():
-            try:
-                import shutil
-                shutil.rmtree(self.var_dir)
-            except:
-                pass
-        if hasattr(self, 'etc_nginx_dir') and self.etc_nginx_dir.exists():
-            try:
-                import shutil
-                shutil.rmtree(self.etc_nginx_dir)
+                shutil.rmtree(self.local_sandbox)
             except:
                 pass
 
