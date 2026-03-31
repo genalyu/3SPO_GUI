@@ -36,6 +36,7 @@ df -h /tmp
 df -h /public/home/xlwang
 
 echo "==================== [STEP 2: IO & Image Integrity] ===================="
+SANDBOX_PATH="/public/home/xlwang/genalyu/3SPO/osworld_uitars.sif"
 REMOTE_IMG="/public/home/xlwang/genalyu/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
 LOCAL_DIR="/tmp/xlwang/diag_$SLURM_JOB_ID"
 LOCAL_IMG="$LOCAL_DIR/Ubuntu.qcow2"
@@ -59,7 +60,7 @@ echo "Starting raw QEMU boot test (no GUI, 300s timeout)..."
 singularity exec --nv --writable-tmpfs \
     --bind /dev/kvm:/dev/kvm \
     --bind "$LOCAL_IMG":/System.qcow2 \
-    /public/home/xlwang/genalyu/3SPO/osworld-sandbox \
+    "$SANDBOX_PATH" \
     qemu-system-x86_64 \
     -m 4096 \
     -enable-kvm \
@@ -73,7 +74,7 @@ QEMU_PID=$!
 sleep 60 
 if ps -p $QEMU_PID > /dev/null; then
     echo "SUCCESS: QEMU process is still running after 60s."
-    netstat -tulpn | grep 5010 && echo "Port 5010 is LISTENING." || echo "Port 5010 NOT found."
+    ss -tulpn | grep 5010 && echo "Port 5010 is LISTENING." || echo "Port 5010 NOT found."
     kill $QEMU_PID
 else
     echo "FAILURE: QEMU process died immediately. Check dmesg."

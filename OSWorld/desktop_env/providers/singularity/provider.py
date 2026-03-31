@@ -172,8 +172,6 @@ class SingularityProvider(Provider):
                 cmd = [
                     "singularity", "run",
                     "--writable-tmpfs", 
-                    "--bind", f"{run_dir}:/run",
-                    "--bind", f"{run_dir}:/var/run",
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
