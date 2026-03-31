@@ -153,25 +153,29 @@ class SingularityProvider(Provider):
                 # Many services (nginx, X11) and the entry.sh script need to write to these directories
                 try:
                     logger.info(f"Extracting system directories from {self.sif_image} to host...")
-                    # Using tar to copy directory structures from container to host
+                    # Using tar with --ignore-failed-read to skip system logs/sockets that might have permission issues
                     subprocess.run(
-                        f"singularity exec {self.sif_image} tar -cf - -C /run . | tar -xf - -C {run_dir}",
-                        shell=True, check=True
+                        f"singularity exec {self.sif_image} tar --ignore-failed-read -cf - -C /run . | tar -xf - -C {run_dir}",
+                        shell=True, check=False
                     )
                     subprocess.run(
-                        f"singularity exec {self.sif_image} tar -cf - -C /var . | tar -xf - -C {var_dir}",
-                        shell=True, check=True
+                        f"singularity exec {self.sif_image} tar --ignore-failed-read -cf - -C /var . | tar -xf - -C {var_dir}",
+                        shell=True, check=False
                     )
                     # Also extract nginx config to modify privileged ports
                     subprocess.run(
-                        f"singularity exec {self.sif_image} tar -cf - -C /etc/nginx . | tar -xf - -C {etc_nginx_dir}",
-                        shell=True, check=True
+                        f"singularity exec {self.sif_image} tar --ignore-failed-read -cf - -C /etc/nginx . | tar -xf - -C {etc_nginx_dir}",
+                        shell=True, check=False
                     )
                     
-                    # Modify nginx config to use non-privileged ports and remove 'user' directive
-                    logger.info("Modifying nginx config to use non-privileged ports...")
-                    subprocess.run(f"grep -rl \"80\" {etc_nginx_dir} | xargs sed -i 's/listen 80;/listen 8888;/g' 2>/dev/null || true", shell=True)
-                    subprocess.run(f"grep -rl \"80\" {etc_nginx_dir} | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:8888;/g' 2>/dev/null || true", shell=True)
+                    # Modify nginx config to use dynamically allocated ports and remove 'user' directive
+                    logger.info(f"Modifying nginx config to use ports (API: {self.server_port}, VNC: {self.vnc_port})...")
+                    # Replace port 80 (standard API) with our dynamic server_port
+                    subprocess.run(f"grep -rl \"80\" {etc_nginx_dir} | xargs sed -i 's/listen 80;/listen {self.server_port};/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"grep -rl \"80\" {etc_nginx_dir} | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:{self.server_port};/g' 2>/dev/null || true", shell=True)
+                    # Replace port 8006 (standard VNC) with our dynamic vnc_port
+                    subprocess.run(f"grep -rl \"8006\" {etc_nginx_dir} | xargs sed -i 's/8006/{self.vnc_port}/g' 2>/dev/null || true", shell=True)
+                    
                     if (etc_nginx_dir / "nginx.conf").exists():
                         subprocess.run(f"sed -i 's/^user /#user /g' {etc_nginx_dir}/nginx.conf", shell=True)
 
