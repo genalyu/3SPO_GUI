@@ -142,6 +142,20 @@ class SingularityProvider(Provider):
                 run_dir = temp_dir / f"singularity_run_{os.getpid()}"
                 run_dir.mkdir(parents=True, exist_ok=True)
 
+                # Extract all scripts from /run inside the SIF to host to avoid permission issues
+                # entry.sh depends on reset.sh, disk.sh etc. which all need to be writable/executable
+                try:
+                    logger.info(f"Extracting startup scripts from {self.sif_image} to {run_dir}...")
+                    # Using tar to copy the whole directory structure from container to host
+                    subprocess.run(
+                        f"singularity exec {self.sif_image} tar -cf - -C /run . | tar -xf - -C {run_dir}",
+                        shell=True, check=True
+                    )
+                    # Ensure host-side scripts are executable
+                    subprocess.run(f"chmod -R 755 {run_dir}", shell=True)
+                except Exception as e:
+                    logger.warning(f"Failed to extract scripts from /run: {e}. Container may fail to boot.")
+
                 # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = temp_dir / f"fake_id_{os.getpid()}"
                 with open(fake_id_path, "w") as f:
@@ -172,6 +186,7 @@ class SingularityProvider(Provider):
                 cmd = [
                     "singularity", "run",
                     "--writable-tmpfs", 
+                    "--bind", f"{run_dir}:/run", # Bind host temp dir to container's /run
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
