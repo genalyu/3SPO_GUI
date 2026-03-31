@@ -141,22 +141,29 @@ class SingularityProvider(Provider):
                 temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
                 run_dir = temp_dir / f"singularity_run_{os.getpid()}"
                 storage_dir = temp_dir / f"singularity_storage_{os.getpid()}"
+                var_dir = temp_dir / f"singularity_var_{os.getpid()}"
+                
                 run_dir.mkdir(parents=True, exist_ok=True)
                 storage_dir.mkdir(parents=True, exist_ok=True)
+                var_dir.mkdir(parents=True, exist_ok=True)
 
-                # Extract all scripts from /run inside the SIF to host to avoid permission issues
-                # entry.sh depends on reset.sh, disk.sh etc. which all need to be writable/executable
+                # Extract all scripts from /run and /var inside the SIF to host to avoid permission issues
+                # Many services (nginx, X11) and the entry.sh script need to write to these directories
                 try:
-                    logger.info(f"Extracting startup scripts from {self.sif_image} to {run_dir}...")
-                    # Using tar to copy the whole directory structure from container to host
+                    logger.info(f"Extracting system directories from {self.sif_image} to host...")
+                    # Using tar to copy directory structures from container to host
                     subprocess.run(
                         f"singularity exec {self.sif_image} tar -cf - -C /run . | tar -xf - -C {run_dir}",
                         shell=True, check=True
                     )
-                    # Ensure host-side scripts are executable
-                    subprocess.run(f"chmod -R 755 {run_dir}", shell=True)
+                    subprocess.run(
+                        f"singularity exec {self.sif_image} tar -cf - -C /var . | tar -xf - -C {var_dir}",
+                        shell=True, check=True
+                    )
+                    # Ensure host-side scripts and service dirs are executable/writable
+                    subprocess.run(f"chmod -R 777 {run_dir} {var_dir} {storage_dir}", shell=True)
                 except Exception as e:
-                    logger.warning(f"Failed to extract scripts from /run: {e}. Container may fail to boot.")
+                    logger.warning(f"Failed to extract system directories: {e}. Container may fail to boot.")
 
                 # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = temp_dir / f"fake_id_{os.getpid()}"
@@ -190,6 +197,7 @@ class SingularityProvider(Provider):
                     "--writable-tmpfs", 
                     "--bind", f"{run_dir}:/run", # Bind host temp dir to container's /run
                     "--bind", f"{storage_dir}:/storage", # Bind host temp dir to container's /storage
+                    "--bind", f"{var_dir}:/var", # Bind host temp dir to container's /var
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
@@ -210,6 +218,7 @@ class SingularityProvider(Provider):
                 self.fake_id_path = fake_id_path
                 self.run_dir = run_dir
                 self.storage_dir = storage_dir
+                self.var_dir = var_dir
 
             # Wait for VM to be ready
             self._wait_for_vm_ready()
@@ -266,6 +275,12 @@ class SingularityProvider(Provider):
             try:
                 import shutil
                 shutil.rmtree(self.storage_dir)
+            except:
+                pass
+        if hasattr(self, 'var_dir') and self.var_dir.exists():
+            try:
+                import shutil
+                shutil.rmtree(self.var_dir)
             except:
                 pass
 
