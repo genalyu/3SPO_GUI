@@ -148,7 +148,8 @@ class SingularityProvider(Provider):
                 
                 # IMPORTANT: Singularity with --writable requires destination mount points to exist in the sandbox.
                 # The cluster's Singularity config tries to auto-mount /public, so we must ensure it exists.
-                for mount_point in ["public", "tmp", "dev", "proc", "sys"]:
+                # Also, the container's internal scripts expect /storage to exist.
+                for mount_point in ["public", "tmp", "dev", "proc", "sys", "storage"]:
                     (local_sandbox / mount_point).mkdir(parents=True, exist_ok=True)
                 
                 # Create a fake 'id' command to bypass root checks inside container
