@@ -46,6 +46,9 @@ class SingularityProvider(Provider):
 
         # Default Sandbox path, can be overridden by environment variable
         self.sandbox_path = os.getenv("OSWORLD_SANDBOX", "/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
+        # Local cache path in /tmp to avoid NFS latency and permission issues
+        self.local_sandbox_root = Path("/tmp/osworld_cache")
+        self.local_sandbox_root.mkdir(parents=True, exist_ok=True)
 
     def _get_used_ports(self):
         """Get all currently used ports and reserved ports."""
@@ -138,54 +141,72 @@ class SingularityProvider(Provider):
                     raise FileNotFoundError(f"Sandbox directory not found: {self.sandbox_path}")
 
                 # Create a local copy of the sandbox in /tmp for performance and isolation
-                temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
-                local_sandbox = temp_dir / f"osworld_sandbox_{os.getpid()}"
+                # We use a unique directory for each process to avoid interference
+                local_sandbox = self.local_sandbox_root / f"osworld_sandbox_{os.getpid()}"
                 
-                # Check if sandbox is valid (has basic dir structure) to avoid using corrupt/partial copies
-                is_valid_sandbox = local_sandbox.exists() and (local_sandbox / "bin").exists() and (local_sandbox / "usr").exists()
+                # Check if sandbox is valid (has basic dir structure and copy is complete)
+                is_valid_sandbox = local_sandbox.exists() and (local_sandbox / ".copy_complete").exists()
 
                 if not is_valid_sandbox:
                     if local_sandbox.exists():
                         logger.info(f"Removing invalid sandbox at {local_sandbox}...")
                         import shutil
-                        shutil.rmtree(local_sandbox)
+                        shutil.rmtree(local_sandbox, ignore_errors=True)
                     
                     logger.info(f"Creating local sandbox copy at {local_sandbox} (this may take a few minutes)...")
                     # Use 'cp -a' to preserve all attributes and be more robust
-                    subprocess.run(f"cp -a {self.sandbox_path} {local_sandbox}", shell=True, check=True)
+                    # We copy to a temporary name and then rename to ensure atomicity
+                    temp_copy_path = f"{local_sandbox}.tmp"
+                    subprocess.run(f"rm -rf {temp_copy_path} && mkdir -p {temp_copy_path} && cp -a {self.sandbox_path}/. {temp_copy_path}/", shell=True, check=True)
+                    (Path(temp_copy_path) / ".copy_complete").touch()
+                    os.rename(temp_copy_path, local_sandbox)
                 
                 # IMPORTANT: Singularity with --writable requires destination mount points to exist in the sandbox.
-                # The cluster's Singularity config tries to auto-mount /public, so we must ensure it exists.
-                # Also, the container's internal scripts expect /storage to exist.
-                for mount_point in ["public", "tmp", "dev", "proc", "sys", "storage"]:
+                # Common cluster mount points and standard system ones:
+                for mount_point in ["public", "tmp", "dev", "proc", "sys", "storage", "gpfs", "var/lib/nginx", "run/nginx"]:
                     (local_sandbox / mount_point).mkdir(parents=True, exist_ok=True)
                 
                 # Create a fake 'id' command to bypass root checks inside container
-                fake_id_path = temp_dir / f"fake_id_{os.getpid()}"
+                fake_id_path = self.local_sandbox_root / f"fake_id_{os.getpid()}"
                 with open(fake_id_path, "w") as f:
                     f.write("#!/bin/sh\necho 0\n")
                 os.chmod(fake_id_path, 0o755)
 
-                # Modify nginx config in the LOCAL sandbox copy for this specific environment
+                # Patch nginx config in the LOCAL sandbox copy
                 nginx_config_path = local_sandbox / "etc/nginx"
                 if nginx_config_path.exists():
                     logger.info(f"Modifying local nginx config to use ports (API: {self.server_port}, VNC: {self.vnc_port})...")
                     # Replace port 80 (standard API) with our dynamic server_port
-                    subprocess.run(f"grep -rl \"80\" {nginx_config_path} | xargs sed -i 's/listen 80;/listen {self.server_port};/g' 2>/dev/null || true", shell=True)
-                    subprocess.run(f"grep -rl \"80\" {nginx_config_path} | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:{self.server_port};/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {nginx_config_path} -type f | xargs sed -i 's/listen 80;/listen {self.server_port};/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {nginx_config_path} -type f | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:{self.server_port};/g' 2>/dev/null || true", shell=True)
                     # Replace port 8006 (standard VNC) with our dynamic vnc_port
-                    subprocess.run(f"grep -rl \"8006\" {nginx_config_path} | xargs sed -i 's/8006/{self.vnc_port}/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {nginx_config_path} -type f | xargs sed -i 's/8006/{self.vnc_port}/g' 2>/dev/null || true", shell=True)
                     
                     nginx_conf = nginx_config_path / "nginx.conf"
                     if nginx_conf.exists():
+                        # Disable nginx 'user' directive since we run as non-root
                         subprocess.run(f"sed -i 's/^user /#user /g' {nginx_conf}", shell=True)
+                        # Fix nginx pid and lock file locations to be writable
+                        subprocess.run(f"sed -i 's|/run/nginx.pid|/tmp/nginx.pid|g' {nginx_conf}", shell=True)
 
-                # KVM acceleration is critical for performance
+                # KVM acceleration is critical
                 kvm_flag = []
                 if os.path.exists("/dev/kvm"):
-                    kvm_flag = ["--bind", "/dev/kvm:/dev/kvm"]
+                    # Check if current user can access /dev/kvm
+                    if os.access("/dev/kvm", os.R_OK | os.W_OK):
+                        kvm_flag = ["--bind", "/dev/kvm:/dev/kvm"]
+                    else:
+                        logger.warning("KVM exists but current user lacks permission! VM will be slow.")
+                else:
+                    logger.warning("KVM not found! Using software emulation (slow).")
 
+                # Clean up host environment variables that might interfere with container binaries
+                # Especially LD_LIBRARY_PATH and PYTHONPATH on cluster environments
                 env = os.environ.copy()
+                for var in ["LD_LIBRARY_PATH", "PYTHONPATH", "PYTHONHOME", "PERL5LIB"]:
+                    if var in env:
+                        del env[var]
+                
                 env.update(self.environment)
                 # Singularity uses SINGULARITYENV_ prefix to pass vars into the container
                 env.update({
@@ -197,15 +218,17 @@ class SingularityProvider(Provider):
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
                     "VLC_PORT": str(self.vlc_port),
-                    "USER": "root", # Fake being root
-                    "HOME": "/root" # Some scripts expect /root
+                    "USER": "root", # Fake being root for internal scripts
+                    "HOME": "/root" # Container scripts often expect /root
                 })
 
                 cmd = [
                     "singularity", "run",
-                    "--cleanenv", # Prevent host environment variables (like LD_LIBRARY_PATH) from interfering
+                    "--contain",  # Isolate container's FS from host (critical for glibc compatibility)
+                    "--cleanenv", # Prevent host environment variables from interfering
                     "--no-home",  # Don't mount host home directory
-                    "--writable", # Use the local sandbox with write permissions
+                    "--writable", # Use the local sandbox copy with write permissions
+                    "--bind", "/dev/shm:/dev/shm", # Required for some internal apps
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
