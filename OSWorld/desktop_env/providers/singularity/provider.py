@@ -140,7 +140,9 @@ class SingularityProvider(Provider):
                 # Create temporary directories for system paths to allow writes
                 temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
                 run_dir = temp_dir / f"singularity_run_{os.getpid()}"
+                storage_dir = temp_dir / f"singularity_storage_{os.getpid()}"
                 run_dir.mkdir(parents=True, exist_ok=True)
+                storage_dir.mkdir(parents=True, exist_ok=True)
 
                 # Extract all scripts from /run inside the SIF to host to avoid permission issues
                 # entry.sh depends on reset.sh, disk.sh etc. which all need to be writable/executable
@@ -187,6 +189,7 @@ class SingularityProvider(Provider):
                     "singularity", "run",
                     "--writable-tmpfs", 
                     "--bind", f"{run_dir}:/run", # Bind host temp dir to container's /run
+                    "--bind", f"{storage_dir}:/storage", # Bind host temp dir to container's /storage
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
@@ -206,6 +209,7 @@ class SingularityProvider(Provider):
                 # Store for cleanup
                 self.fake_id_path = fake_id_path
                 self.run_dir = run_dir
+                self.storage_dir = storage_dir
 
             # Wait for VM to be ready
             self._wait_for_vm_ready()
@@ -256,6 +260,12 @@ class SingularityProvider(Provider):
             try:
                 import shutil
                 shutil.rmtree(self.run_dir)
+            except:
+                pass
+        if hasattr(self, 'storage_dir') and self.storage_dir.exists():
+            try:
+                import shutil
+                shutil.rmtree(self.storage_dir)
             except:
                 pass
 
