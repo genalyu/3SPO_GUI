@@ -37,6 +37,8 @@ class SingularityProvider(Provider):
         self.chromium_port = None
         self.vlc_port = None
         self.process = None
+        self.process_log_path = None
+        self.process_log_file = None
         self.environment = {"DISK_SIZE": "32G", "RAM_SIZE": "4G", "CPU_CORES": "4"}
 
         temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
@@ -97,9 +99,7 @@ class SingularityProvider(Provider):
         def check_screenshot():
             # Check if the process is still alive
             if self.process and self.process.poll() is not None:
-                # Process has exited, read error output
-                _, stderr = self.process.communicate()
-                error_msg = stderr.decode() if stderr else "No error message"
+                error_msg = self._read_process_log_tail()
                 logger.error(f"Singularity process died. Error: {error_msg}")
                 raise RuntimeError(f"Singularity process died: {error_msg}")
 
@@ -119,8 +119,21 @@ class SingularityProvider(Provider):
         
         if self.process:
             logger.error(f"Timeout reached for port {self.server_port}. Checking process status...")
+            logger.error(f"Container startup log tail: {self._read_process_log_tail()}")
         
         raise TimeoutError(f"VM on port {self.server_port} failed to become ready within {timeout}s")
+
+    def _read_process_log_tail(self, max_lines: int = 80) -> str:
+        if not self.process_log_path:
+            return "No process log path available"
+        log_path = Path(self.process_log_path)
+        if not log_path.exists():
+            return f"No process log file found at {log_path}"
+        try:
+            with open(log_path, "rb") as f:
+                return b"".join(f.readlines()[-max_lines:]).decode(errors="replace").strip() or "Process log is empty"
+        except Exception as e:
+            return f"Failed to read process log: {e}"
 
     def start_emulator(self, path_to_vm: str, headless: bool, os_type: str, name=None):
         # Use a single lock for all port allocation and container startup
@@ -215,13 +228,58 @@ class SingularityProvider(Provider):
                         # Fallback to run if we can't find entry script
                         entry_script = None
 
+                preflight_modes = [
+                    ["--writable-tmpfs"],
+                    []
+                ]
+                selected_mode = None
+                preflight_failures = []
+                for mode_flags in preflight_modes:
+                    preflight_cmd = [
+                        "singularity", "exec",
+                        "--cleanenv",
+                        "--no-home",
+                        *mode_flags,
+                        "--bind", f"{fake_id_path}:/usr/bin/id",
+                        "--bind", f"{fake_id_path}:/bin/id",
+                        *kvm_flag,
+                        str(source_sandbox),
+                        "/bin/bash", "-lc", "echo preflight_ok"
+                    ]
+                    try:
+                        preflight_result = subprocess.run(
+                            preflight_cmd,
+                            env=env,
+                            capture_output=True,
+                            text=True,
+                            timeout=60,
+                            check=True
+                        )
+                        if "preflight_ok" in preflight_result.stdout:
+                            selected_mode = mode_flags
+                            break
+                        preflight_failures.append(
+                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} missing marker stdout={preflight_result.stdout[-200:]}"
+                        )
+                    except subprocess.TimeoutExpired:
+                        preflight_failures.append(
+                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} timeout>60s"
+                        )
+                    except subprocess.CalledProcessError as preflight_error:
+                        preflight_failures.append(
+                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} exit={preflight_error.returncode} stderr={(preflight_error.stderr or '')[-400:]}"
+                        )
+
+                if selected_mode is None:
+                    raise RuntimeError(f"Singularity preflight failed: {' | '.join(preflight_failures)}")
+
                 cmd = [
                     "singularity", "exec" if entry_script else "run",
                     # Remove --contain for now to see if it's the cause of basic binary failure
                     # "--contain", 
                     "--cleanenv", # Prevent host environment variables from interfering
                     "--no-home",  # Don't mount host home directory
-                    "--writable-tmpfs",
+                    *selected_mode,
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
@@ -236,12 +294,14 @@ class SingularityProvider(Provider):
                 if entry_script:
                     cmd.extend(["/bin/bash", entry_script])
 
-                logger.info(f"Starting Singularity (Port {self.server_port}): {' '.join(cmd)}")
+                logger.info(f"Starting Singularity (Port {self.server_port}, mode: {' '.join(selected_mode) if selected_mode else '(none)'}): {' '.join(cmd)}")
+                self.process_log_path = str(runtime_root / "singularity_startup.log")
+                self.process_log_file = open(self.process_log_path, "ab")
                 self.process = subprocess.Popen(
                     cmd,
                     env=env,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    stdout=self.process_log_file,
+                    stderr=self.process_log_file,
                     preexec_fn=os.setsid 
                 )
 
@@ -286,6 +346,13 @@ class SingularityProvider(Provider):
                 pass
             finally:
                 self.process = None
+        if self.process_log_file:
+            try:
+                self.process_log_file.close()
+            except:
+                pass
+            self.process_log_file = None
+            self.process_log_path = None
         
         # Cleanup regardless of process state
         self._release_ports()
