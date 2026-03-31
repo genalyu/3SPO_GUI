@@ -142,10 +142,12 @@ class SingularityProvider(Provider):
                 run_dir = temp_dir / f"singularity_run_{os.getpid()}"
                 storage_dir = temp_dir / f"singularity_storage_{os.getpid()}"
                 var_dir = temp_dir / f"singularity_var_{os.getpid()}"
+                etc_nginx_dir = temp_dir / f"singularity_nginx_{os.getpid()}"
                 
                 run_dir.mkdir(parents=True, exist_ok=True)
                 storage_dir.mkdir(parents=True, exist_ok=True)
                 var_dir.mkdir(parents=True, exist_ok=True)
+                etc_nginx_dir.mkdir(parents=True, exist_ok=True)
 
                 # Extract all scripts from /run and /var inside the SIF to host to avoid permission issues
                 # Many services (nginx, X11) and the entry.sh script need to write to these directories
@@ -160,8 +162,21 @@ class SingularityProvider(Provider):
                         f"singularity exec {self.sif_image} tar -cf - -C /var . | tar -xf - -C {var_dir}",
                         shell=True, check=True
                     )
+                    # Also extract nginx config to modify privileged ports
+                    subprocess.run(
+                        f"singularity exec {self.sif_image} tar -cf - -C /etc/nginx . | tar -xf - -C {etc_nginx_dir}",
+                        shell=True, check=True
+                    )
+                    
+                    # Modify nginx config to use non-privileged ports and remove 'user' directive
+                    logger.info("Modifying nginx config to use non-privileged ports...")
+                    subprocess.run(f"grep -rl \"80\" {etc_nginx_dir} | xargs sed -i 's/listen 80;/listen 8888;/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"grep -rl \"80\" {etc_nginx_dir} | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:8888;/g' 2>/dev/null || true", shell=True)
+                    if (etc_nginx_dir / "nginx.conf").exists():
+                        subprocess.run(f"sed -i 's/^user /#user /g' {etc_nginx_dir}/nginx.conf", shell=True)
+
                     # Ensure host-side scripts and service dirs are executable/writable
-                    subprocess.run(f"chmod -R 777 {run_dir} {var_dir} {storage_dir}", shell=True)
+                    subprocess.run(f"chmod -R 777 {run_dir} {var_dir} {storage_dir} {etc_nginx_dir}", shell=True)
                 except Exception as e:
                     logger.warning(f"Failed to extract system directories: {e}. Container may fail to boot.")
 
@@ -198,6 +213,7 @@ class SingularityProvider(Provider):
                     "--bind", f"{run_dir}:/run", # Bind host temp dir to container's /run
                     "--bind", f"{storage_dir}:/storage", # Bind host temp dir to container's /storage
                     "--bind", f"{var_dir}:/var", # Bind host temp dir to container's /var
+                    "--bind", f"{etc_nginx_dir}:/etc/nginx", # Bind host temp dir to container's /etc/nginx
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
@@ -219,6 +235,7 @@ class SingularityProvider(Provider):
                 self.run_dir = run_dir
                 self.storage_dir = storage_dir
                 self.var_dir = var_dir
+                self.etc_nginx_dir = etc_nginx_dir
 
             # Wait for VM to be ready
             self._wait_for_vm_ready()
@@ -281,6 +298,12 @@ class SingularityProvider(Provider):
             try:
                 import shutil
                 shutil.rmtree(self.var_dir)
+            except:
+                pass
+        if hasattr(self, 'etc_nginx_dir') and self.etc_nginx_dir.exists():
+            try:
+                import shutil
+                shutil.rmtree(self.etc_nginx_dir)
             except:
                 pass
 
