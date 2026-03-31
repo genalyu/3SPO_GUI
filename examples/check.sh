@@ -2,13 +2,13 @@
 #SBATCH --job-name=SuperDiag
 #SBATCH --partition=a100
 #SBATCH --nodes=1
-#SBATCH --nodelist=gpu22          # 指定在 gpu22 节点运行
+#SBATCH --nodelist=gpu23          # 指定在 gpu23 节点运行
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=00:30:00
 #SBATCH --output=super_diag_%j.log
-
+singularity exec --cleanenv --no-home --writable-tmpfs /public/home/xlwang/genalyu/3SPO/osworld-sandbox /bin/bash -lc 'echo ok'
 echo "==================== [STEP 1: Host Environment] ===================="
 echo "Node: $(hostname)"
 echo "User: $(whoami)"

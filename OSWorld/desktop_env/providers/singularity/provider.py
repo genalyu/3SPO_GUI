@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+import shutil
 import time
 import psutil
 import requests
@@ -140,48 +141,31 @@ class SingularityProvider(Provider):
                 if not os.path.exists(self.sandbox_path):
                     raise FileNotFoundError(f"Sandbox directory not found: {self.sandbox_path}")
 
-                # Create a local copy of the sandbox in /tmp for performance and isolation
-                # We use a unique directory for each process to avoid interference
-                local_sandbox = self.local_sandbox_root / f"osworld_sandbox_{os.getpid()}"
-                
-                # Check if sandbox is valid (has basic dir structure and copy is complete)
-                is_valid_sandbox = local_sandbox.exists() and (local_sandbox / ".copy_complete").exists()
+                source_sandbox = Path(self.sandbox_path)
+                runtime_root = self.local_sandbox_root / f"osworld_runtime_{os.getpid()}"
+                if runtime_root.exists():
+                    shutil.rmtree(runtime_root, ignore_errors=True)
+                runtime_root.mkdir(parents=True, exist_ok=True)
 
-                if not is_valid_sandbox:
-                    if local_sandbox.exists():
-                        logger.info(f"Removing invalid sandbox at {local_sandbox}...")
-                        import shutil
-                        shutil.rmtree(local_sandbox, ignore_errors=True)
-                    
-                    logger.info(f"Creating local sandbox copy at {local_sandbox} (this may take a few minutes)...")
-                    # Use 'rsync' instead of 'cp -a' to be more robust with symlinks and partial copies
-                    temp_copy_path = f"{local_sandbox}.tmp"
-                    subprocess.run(f"rm -rf {temp_copy_path} && mkdir -p {temp_copy_path} && rsync -a {self.sandbox_path}/ {temp_copy_path}/", shell=True, check=True)
-                    (Path(temp_copy_path) / ".copy_complete").touch()
-                    os.rename(temp_copy_path, local_sandbox)
-                
-                # IMPORTANT: Singularity with --writable requires destination mount points to exist in the sandbox.
-                # Common cluster mount points and standard system ones:
-                for mount_point in ["public", "tmp", "dev", "proc", "sys", "storage", "gpfs", "var/lib/nginx", "run/nginx"]:
-                    (local_sandbox / mount_point).mkdir(parents=True, exist_ok=True)
-                
                 # Create a fake 'id' command to bypass root checks inside container
-                fake_id_path = self.local_sandbox_root / f"fake_id_{os.getpid()}"
+                fake_id_path = runtime_root / "fake_id"
                 with open(fake_id_path, "w") as f:
                     f.write("#!/bin/sh\necho 0\n")
                 os.chmod(fake_id_path, 0o755)
 
-                # Patch nginx config in the LOCAL sandbox copy
-                nginx_config_path = local_sandbox / "etc/nginx"
-                if nginx_config_path.exists():
+                runtime_nginx_path = None
+                source_nginx_path = source_sandbox / "etc/nginx"
+                if source_nginx_path.exists():
+                    runtime_nginx_path = runtime_root / "nginx"
+                    shutil.copytree(source_nginx_path, runtime_nginx_path, symlinks=True)
                     logger.info(f"Modifying local nginx config to use ports (API: {self.server_port}, VNC: {self.vnc_port})...")
                     # Replace port 80 (standard API) with our dynamic server_port
-                    subprocess.run(f"find {nginx_config_path} -type f | xargs sed -i 's/listen 80;/listen {self.server_port};/g' 2>/dev/null || true", shell=True)
-                    subprocess.run(f"find {nginx_config_path} -type f | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:{self.server_port};/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {runtime_nginx_path} -type f | xargs sed -i 's/listen 80;/listen {self.server_port};/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {runtime_nginx_path} -type f | xargs sed -i 's/listen \\[::\\]:80;/listen \\[::\\]:{self.server_port};/g' 2>/dev/null || true", shell=True)
                     # Replace port 8006 (standard VNC) with our dynamic vnc_port
-                    subprocess.run(f"find {nginx_config_path} -type f | xargs sed -i 's/8006/{self.vnc_port}/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {runtime_nginx_path} -type f | xargs sed -i 's/8006/{self.vnc_port}/g' 2>/dev/null || true", shell=True)
                     
-                    nginx_conf = nginx_config_path / "nginx.conf"
+                    nginx_conf = runtime_nginx_path / "nginx.conf"
                     if nginx_conf.exists():
                         # Disable nginx 'user' directive since we run as non-root
                         subprocess.run(f"sed -i 's/^user /#user /g' {nginx_conf}", shell=True)
@@ -222,10 +206,10 @@ class SingularityProvider(Provider):
                 })
 
                 # Define the entry script path. Usually /run/entry.sh or /entry.sh
-                # We'll check which one exists in the local sandbox
+                # We'll check which one exists in the source sandbox
                 entry_script = "/run/entry.sh"
-                if not (local_sandbox / "run/entry.sh").exists():
-                    if (local_sandbox / "entry.sh").exists():
+                if not (source_sandbox / "run/entry.sh").exists():
+                    if (source_sandbox / "entry.sh").exists():
                         entry_script = "/entry.sh"
                     else:
                         # Fallback to run if we can't find entry script
@@ -237,13 +221,17 @@ class SingularityProvider(Provider):
                     # "--contain", 
                     "--cleanenv", # Prevent host environment variables from interfering
                     "--no-home",  # Don't mount host home directory
-                    "--writable", # Use the local sandbox copy with write permissions
+                    "--writable-tmpfs",
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
-                    str(local_sandbox)
                 ]
+
+                if runtime_nginx_path:
+                    cmd.extend(["--bind", f"{runtime_nginx_path}:/etc/nginx"])
+
+                cmd.append(str(source_sandbox))
                 
                 if entry_script:
                     cmd.extend(["/bin/bash", entry_script])
@@ -259,7 +247,7 @@ class SingularityProvider(Provider):
 
                 # Store for cleanup
                 self.fake_id_path = fake_id_path
-                self.local_sandbox = local_sandbox
+                self.runtime_root = runtime_root
 
             # Wait for VM to be ready
             self._wait_for_vm_ready()
@@ -306,10 +294,9 @@ class SingularityProvider(Provider):
                 self.fake_id_path.unlink()
             except:
                 pass
-        if hasattr(self, 'local_sandbox') and self.local_sandbox.exists():
+        if hasattr(self, 'runtime_root') and self.runtime_root.exists():
             try:
-                import shutil
-                shutil.rmtree(self.local_sandbox)
+                shutil.rmtree(self.runtime_root)
             except:
                 pass
 
