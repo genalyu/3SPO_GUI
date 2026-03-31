@@ -218,23 +218,39 @@ class SingularityProvider(Provider):
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
                     "VLC_PORT": str(self.vlc_port),
+                    "SINGULARITYENV_LD_LIBRARY_PATH": "/lib:/usr/lib:/usr/local/lib:/lib64:/usr/lib64",
                     "USER": "root", # Fake being root for internal scripts
                     "HOME": "/root" # Container scripts often expect /root
                 })
 
+                # Define the entry script path. Usually /run/entry.sh or /entry.sh
+                # We'll check which one exists in the local sandbox
+                entry_script = "/run/entry.sh"
+                if not (local_sandbox / "run/entry.sh").exists():
+                    if (local_sandbox / "entry.sh").exists():
+                        entry_script = "/entry.sh"
+                    else:
+                        # Fallback to run if we can't find entry script
+                        entry_script = None
+
                 cmd = [
-                    "singularity", "run",
-                    "--contain",  # Isolate container's FS from host (critical for glibc compatibility)
+                    "singularity", "exec" if entry_script else "run",
+                    "--contain",  # Isolate container's FS from host
                     "--cleanenv", # Prevent host environment variables from interfering
                     "--no-home",  # Don't mount host home directory
                     "--writable", # Use the local sandbox copy with write permissions
-                    "--bind", "/dev/shm:/dev/shm", # Required for some internal apps
+                    # Note: /dev/shm is usually handled by --contain, but some versions need explicit bind
+                    # We'll try to NOT bind it to avoid the "already mounted" warning
+                    # "--bind", "/dev/shm:/dev/shm", 
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
                     str(local_sandbox)
                 ]
+                
+                if entry_script:
+                    cmd.extend(["/bin/bash", entry_script])
 
                 logger.info(f"Starting Singularity (Port {self.server_port}): {' '.join(cmd)}")
                 self.process = subprocess.Popen(
