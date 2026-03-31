@@ -141,10 +141,18 @@ class SingularityProvider(Provider):
                 temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
                 local_sandbox = temp_dir / f"osworld_sandbox_{os.getpid()}"
                 
-                if not local_sandbox.exists():
+                # Check if sandbox is valid (has basic dir structure) to avoid using corrupt/partial copies
+                is_valid_sandbox = local_sandbox.exists() and (local_sandbox / "bin").exists() and (local_sandbox / "usr").exists()
+
+                if not is_valid_sandbox:
+                    if local_sandbox.exists():
+                        logger.info(f"Removing invalid sandbox at {local_sandbox}...")
+                        import shutil
+                        shutil.rmtree(local_sandbox)
+                    
                     logger.info(f"Creating local sandbox copy at {local_sandbox} (this may take a few minutes)...")
-                    # Use rsync to copy efficiently
-                    subprocess.run(f"cp -r {self.sandbox_path} {local_sandbox}", shell=True, check=True)
+                    # Use 'cp -a' to preserve all attributes and be more robust
+                    subprocess.run(f"cp -a {self.sandbox_path} {local_sandbox}", shell=True, check=True)
                 
                 # IMPORTANT: Singularity with --writable requires destination mount points to exist in the sandbox.
                 # The cluster's Singularity config tries to auto-mount /public, so we must ensure it exists.
@@ -195,6 +203,8 @@ class SingularityProvider(Provider):
 
                 cmd = [
                     "singularity", "run",
+                    "--cleanenv", # Prevent host environment variables (like LD_LIBRARY_PATH) from interfering
+                    "--no-home",  # Don't mount host home directory
                     "--writable", # Use the local sandbox with write permissions
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
