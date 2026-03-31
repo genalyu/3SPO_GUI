@@ -146,6 +146,11 @@ class SingularityProvider(Provider):
                     # Use rsync to copy efficiently
                     subprocess.run(f"cp -r {self.sandbox_path} {local_sandbox}", shell=True, check=True)
                 
+                # IMPORTANT: Singularity with --writable requires destination mount points to exist in the sandbox.
+                # The cluster's Singularity config tries to auto-mount /public, so we must ensure it exists.
+                for mount_point in ["public", "tmp", "dev", "proc", "sys"]:
+                    (local_sandbox / mount_point).mkdir(parents=True, exist_ok=True)
+                
                 # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = temp_dir / f"fake_id_{os.getpid()}"
                 with open(fake_id_path, "w") as f:
