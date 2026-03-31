@@ -29,6 +29,7 @@ cleanup() {
     pkill -9 -u $USER -f singularity || true
     pkill -9 -u $USER -f qemu || true
     [ -d "$LOCAL_WORK_DIR" ] && rm -rf "$LOCAL_WORK_DIR"
+    rm -rf /tmp/osworld_cache 2>/dev/null || true
     echo "Cleanup complete."
 }
 trap cleanup EXIT SIGINT SIGTERM
@@ -63,7 +64,7 @@ echo "Copying image to local SSD for maximum I/O performance..."
 cp "$REMOTE_IMAGE" "$LOCAL_IMAGE"
 
 # 清理过往残留的临时文件
-rm -rf /tmp/fake_id_* /tmp/singularity_run_* 2>/dev/null || true
+rm -rf /tmp/fake_id_* /tmp/singularity_run_* /tmp/osworld_cache 2>/dev/null || true
 
 # --- 步骤 1: 启动模型推理服务 ---
 echo "Starting model server..."

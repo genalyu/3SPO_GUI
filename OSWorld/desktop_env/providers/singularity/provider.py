@@ -154,10 +154,9 @@ class SingularityProvider(Provider):
                         shutil.rmtree(local_sandbox, ignore_errors=True)
                     
                     logger.info(f"Creating local sandbox copy at {local_sandbox} (this may take a few minutes)...")
-                    # Use 'cp -a' to preserve all attributes and be more robust
-                    # We copy to a temporary name and then rename to ensure atomicity
+                    # Use 'rsync' instead of 'cp -a' to be more robust with symlinks and partial copies
                     temp_copy_path = f"{local_sandbox}.tmp"
-                    subprocess.run(f"rm -rf {temp_copy_path} && mkdir -p {temp_copy_path} && cp -a {self.sandbox_path}/. {temp_copy_path}/", shell=True, check=True)
+                    subprocess.run(f"rm -rf {temp_copy_path} && mkdir -p {temp_copy_path} && rsync -a --info=progress2 {self.sandbox_path}/ {temp_copy_path}/", shell=True, check=True)
                     (Path(temp_copy_path) / ".copy_complete").touch()
                     os.rename(temp_copy_path, local_sandbox)
                 
@@ -218,7 +217,6 @@ class SingularityProvider(Provider):
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
                     "VLC_PORT": str(self.vlc_port),
-                    "SINGULARITYENV_LD_LIBRARY_PATH": "/lib:/usr/lib:/usr/local/lib:/lib64:/usr/lib64",
                     "USER": "root", # Fake being root for internal scripts
                     "HOME": "/root" # Container scripts often expect /root
                 })
@@ -235,13 +233,11 @@ class SingularityProvider(Provider):
 
                 cmd = [
                     "singularity", "exec" if entry_script else "run",
-                    "--contain",  # Isolate container's FS from host
+                    # Remove --contain for now to see if it's the cause of basic binary failure
+                    # "--contain", 
                     "--cleanenv", # Prevent host environment variables from interfering
                     "--no-home",  # Don't mount host home directory
                     "--writable", # Use the local sandbox copy with write permissions
-                    # Note: /dev/shm is usually handled by --contain, but some versions need explicit bind
-                    # We'll try to NOT bind it to avoid the "already mounted" warning
-                    # "--bind", "/dev/shm:/dev/shm", 
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
                     *kvm_flag,
