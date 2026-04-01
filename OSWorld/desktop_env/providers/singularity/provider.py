@@ -189,6 +189,11 @@ class SingularityProvider(Provider):
                     shutil.rmtree(runtime_root, ignore_errors=True)
                 runtime_root.mkdir(parents=True, exist_ok=True)
 
+                # Create runtime directories for mounting
+                runtime_run_dir = runtime_root / "run"
+                runtime_run_dir.mkdir(parents=True, exist_ok=True)
+                (runtime_run_dir / "shm").mkdir(parents=True, exist_ok=True) # Prepare for link destination
+
                 # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = runtime_root / "fake_id"
                 with open(fake_id_path, "w") as f:
@@ -278,6 +283,7 @@ class SingularityProvider(Provider):
                     preflight_cmd = [
                         "singularity", "exec",
                         *mode_flags,
+                        "--bind", f"{runtime_run_dir}:/run",
                         str(source_sandbox),
                         "/bin/sh", "-c", "echo preflight_ok"
                     ]
@@ -318,6 +324,7 @@ class SingularityProvider(Provider):
                 if runtime_nginx_path:
                     cmd.extend(["--bind", f"{runtime_nginx_path}:/etc/nginx"])
 
+                cmd.extend(["--bind", f"{runtime_run_dir}:/run"])
                 cmd.append(str(source_sandbox))
                 
                 if entry_script:
