@@ -194,6 +194,12 @@ class SingularityProvider(Provider):
                 runtime_run_dir.mkdir(parents=True, exist_ok=True)
                 (runtime_run_dir / "shm").mkdir(parents=True, exist_ok=True) # Prepare for link destination
 
+                # Create local tmp and xdg runtime for the container
+                runtime_tmp_dir = runtime_root / "tmp"
+                runtime_tmp_dir.mkdir(parents=True, exist_ok=True)
+                runtime_xdg_dir = runtime_root / "xdg"
+                runtime_xdg_dir.mkdir(parents=True, exist_ok=True)
+
                 # Create storage directory for QEMU
                 runtime_storage_dir = runtime_root / "storage"
                 runtime_storage_dir.mkdir(parents=True, exist_ok=True)
@@ -233,6 +239,16 @@ class SingularityProvider(Provider):
                             shutil.copytree(s, d, symlinks=True)
                         else:
                             shutil.copy2(s, d)
+                
+                # Patch entry.sh to use /storage/boot.qcow2 instead of /boot.qcow2
+                # This is necessary for read-only SIF images where / is not writable
+                local_entry_sh = runtime_run_dir / "entry.sh"
+                if local_entry_sh.exists():
+                    logger.info("Patching local entry.sh to redirect /boot.qcow2 to /storage/boot.qcow2...")
+                    subprocess.run(f"sed -i 's|/boot.qcow2|/storage/boot.qcow2|g' {local_entry_sh}", shell=True)
+                    # Also patch common temp paths to point to our writable /tmp
+                    subprocess.run(f"sed -i 's|/run/shm|/run/shm_real|g' {local_entry_sh}", shell=True)
+                    (runtime_run_dir / "shm_real").mkdir(parents=True, exist_ok=True)
 
                 # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = runtime_root / "fake_id"
@@ -289,6 +305,7 @@ class SingularityProvider(Provider):
                 singularity_cache.mkdir(parents=True, exist_ok=True)
                 env["SINGULARITY_TMPDIR"] = str(singularity_tmp)
                 env["SINGULARITY_CACHEDIR"] = str(singularity_cache)
+                env["SINGULARITY_DISABLE_CACHE"] = "True"
                 # Singularity uses SINGULARITYENV_ prefix to pass vars into the container
                 env.update({
                     "SINGULARITYENV_VNC_PORT": str(self.vnc_port),
@@ -298,6 +315,7 @@ class SingularityProvider(Provider):
                     "SINGULARITYENV_VM_NET_DEV": "lo", # Fix 'eth0 not found' error
                     "SINGULARITYENV_KVM": kvm_env, # Bypass KVM check if not available
                     "SINGULARITYENV_DHCP": "N", # Bypass bridge creation/DHCP inside container
+                    "SINGULARITYENV_XDG_RUNTIME_DIR": "/xdg", # Local writable XDG path
                     "VNC_PORT": str(self.vnc_port),
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
@@ -338,6 +356,8 @@ class SingularityProvider(Provider):
                         *mode_flags,
                         "--bind", f"{runtime_run_dir}:/run",
                         "--bind", f"{runtime_storage_dir}:/storage",
+                        "--bind", f"{runtime_tmp_dir}:/tmp",
+                        "--bind", f"{runtime_xdg_dir}:/xdg",
                         "--bind", f"{runtime_nginx_lib}:/var/lib/nginx",
                         "--bind", f"{runtime_nginx_log}:/var/log/nginx",
                         str(source_sandbox),
@@ -380,6 +400,8 @@ class SingularityProvider(Provider):
                 cmd.extend([
                     "--bind", f"{runtime_run_dir}:/run",
                     "--bind", f"{runtime_storage_dir}:/storage",
+                    "--bind", f"{runtime_tmp_dir}:/tmp",
+                    "--bind", f"{runtime_xdg_dir}:/xdg",
                     "--bind", f"{runtime_nginx_lib}:/var/lib/nginx",
                     "--bind", f"{runtime_nginx_log}:/var/log/nginx"
                 ])
@@ -429,13 +451,17 @@ class SingularityProvider(Provider):
         if self.process:
             logger.info(f"Stopping Singularity container (PID: {self.process.pid})...")
             try:
-                # Get the process group ID
-                pgid = os.getpgid(self.process.pid)
-                # Force kill the entire process group immediately in software mode
-                # to avoid lingering QEMU processes
-                os.killpg(pgid, signal.SIGKILL)
-                self.process.wait(timeout=1)
-            except (ProcessLookupError, OSError):
+                # Use psutil to find all child processes (like QEMU) and kill them recursively
+                parent = psutil.Process(self.process.pid)
+                children = parent.children(recursive=True)
+                for child in children:
+                    try:
+                        child.kill()
+                    except:
+                        pass
+                parent.kill()
+                self.process.wait(timeout=2)
+            except (psutil.NoSuchProcess, ProcessLookupError, OSError):
                 pass
             finally:
                 self.process = None
