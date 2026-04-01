@@ -201,12 +201,17 @@ class SingularityProvider(Provider):
                 # Create nginx directories
                 runtime_nginx_lib = runtime_root / "var_lib_nginx"
                 runtime_nginx_log = runtime_root / "var_log_nginx"
+                runtime_nginx_path = runtime_root / "nginx"
                 runtime_nginx_lib.mkdir(parents=True, exist_ok=True)
                 runtime_nginx_log.mkdir(parents=True, exist_ok=True)
+                runtime_nginx_path.mkdir(parents=True, exist_ok=True)
 
                 # If the source is a directory, copy existing /run content to avoid shadowing entry.sh
                 dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
                 source_run_dir = dir_path / "run"
+                source_nginx_path = dir_path / "etc/nginx"
+
+                # Priority copy for run directory
                 if source_run_dir.exists() and source_run_dir.is_dir():
                     for item in os.listdir(source_run_dir):
                         s = source_run_dir / item
@@ -235,11 +240,13 @@ class SingularityProvider(Provider):
                     f.write("#!/bin/sh\necho 0\n")
                 os.chmod(fake_id_path, 0o755)
 
-                runtime_nginx_path = None
-                source_nginx_path = source_sandbox / "etc/nginx"
-                if source_nginx_path.exists():
-                    runtime_nginx_path = runtime_root / "nginx"
-                    shutil.copytree(source_nginx_path, runtime_nginx_path, symlinks=True)
+                # Priority copy for nginx config
+                if source_nginx_path.exists() and source_nginx_path.is_dir():
+                    shutil.copytree(source_nginx_path, runtime_nginx_path, symlinks=True, dirs_exist_ok=True)
+                elif source_sandbox.is_dir() and (source_sandbox / "etc/nginx").exists():
+                    shutil.copytree(source_sandbox / "etc/nginx", runtime_nginx_path, symlinks=True, dirs_exist_ok=True)
+
+                if any(runtime_nginx_path.iterdir()):
                     logger.info(f"Modifying local nginx config to use ports (API: {self.server_port}, VNC: {self.vnc_port})...")
                     # Replace port 80 (standard API) with our dynamic server_port
                     subprocess.run(f"find {runtime_nginx_path} -type f | xargs sed -i 's/listen 80;/listen {self.server_port};/g' 2>/dev/null || true", shell=True)
@@ -253,6 +260,9 @@ class SingularityProvider(Provider):
                         subprocess.run(f"sed -i 's/^user /#user /g' {nginx_conf}", shell=True)
                         # Fix nginx pid and lock file locations to be writable
                         subprocess.run(f"sed -i 's|/run/nginx.pid|/tmp/nginx.pid|g' {nginx_conf}", shell=True)
+                else:
+                    logger.warning("Could not find source nginx config to patch! Nginx may fail to bind port 80.")
+                    runtime_nginx_path = None
 
                 # KVM acceleration is critical
                 kvm_flag = []
