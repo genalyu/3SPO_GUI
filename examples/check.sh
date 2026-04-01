@@ -76,6 +76,7 @@ mark_result() {
     fi
 }
 
+# --- Host Checks ---
 echo "===== Host Checks ====="
 df -h /tmp || true
 df -h /public/home/xlwang || true
@@ -97,6 +98,18 @@ if [ -e /dev/kvm ]; then
     fi
 else
     echo "KVM_ACCESS=NO_DEVICE (FAILURE: /dev/kvm NOT FOUND)"
+fi
+
+# --- Host KVM Test (No Container) ---
+echo
+echo "===== Host KVM Test (No Container) ====="
+echo "Testing QEMU KVM initialization directly on host..."
+# Using the qemu binary from the environment or system
+QEMU_BIN=$(command -v qemu-system-x86_64 || echo "/usr/libexec/qemu-kvm")
+if [ -x "$QEMU_BIN" ]; then
+    $QEMU_BIN -machine accel=kvm -display none -vga none -m 128 -nodefaults -monitor stdio -chardev stdio,id=char0 -serial chardev:char0 </dev/null > /dev/null 2>&1 && echo "HOST_KVM_INIT: OK" || echo "HOST_KVM_INIT: DENIED (ioctl failed on host)"
+else
+    echo "HOST_KVM_INIT: ERROR (QEMU binary not found on host)"
 fi
 
 # --- Python Environment Setup ---
