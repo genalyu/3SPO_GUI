@@ -21,10 +21,10 @@ SANDBOX_DIR="/public/home/xlwang/genalyu/3SPO/osworld-sandbox"
 SANDBOX_SIF="/public/home/xlwang/genalyu/3SPO/osworld_uitars.sif"
 REMOTE_IMG="/public/home/xlwang/genalyu/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
 
-if [ -d "$SANDBOX_DIR" ]; then
-    SANDBOX_TARGET="$SANDBOX_DIR"
-elif [ -f "$SANDBOX_SIF" ]; then
+if [ -f "$SANDBOX_SIF" ]; then
     SANDBOX_TARGET="$SANDBOX_SIF"
+elif [ -d "$SANDBOX_DIR" ]; then
+    SANDBOX_TARGET="$SANDBOX_DIR"
 else
     echo "FATAL: sandbox not found: $SANDBOX_DIR or $SANDBOX_SIF"
     exit 2
@@ -91,13 +91,21 @@ fi
 run_with_timeout "singularity version" 10 singularity --version
 mark_result $?
 
-run_with_timeout "singularity simple host command" 20 singularity exec "$SANDBOX_TARGET" /bin/sh -c 'echo host_exec_ok'
+run_with_timeout "singularity simple host command" 30 singularity exec "$SANDBOX_TARGET" /bin/sh -c 'echo host_exec_ok'
 mark_result $?
+
+# If simple command failed, try with --debug for next one
+if [ $? -ne 0 ]; then
+    run_with_timeout "singularity simple command (DEBUG)" 45 singularity -d exec "$SANDBOX_TARGET" /bin/sh -c 'echo host_exec_debug_ok'
+    mark_result $?
+fi
 
 MODES=(
     "--cleanenv --no-home --writable-tmpfs"
     "--cleanenv --no-home"
     "--cleanenv --containall"
+    "--cleanenv --userns"
+    "--cleanenv --no-privs"
     "--cleanenv"
     ""
 )
