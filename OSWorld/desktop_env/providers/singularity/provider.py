@@ -299,6 +299,7 @@ class SingularityProvider(Provider):
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
                     "VLC_PORT": str(self.vlc_port),
+                    "SINGULARITYENV_VM_NET_DEV": "lo", # Fix 'eth0 not found' error
                     "USER": "root", # Fake being root for internal scripts
                     "HOME": "/root" # Container scripts often expect /root
                 })
@@ -364,8 +365,6 @@ class SingularityProvider(Provider):
                     "singularity", "exec" if entry_script else "run",
                     # Remove --contain for now to see if it's the cause of basic binary failure
                     # "--contain", 
-                    "--cleanenv", # Prevent host environment variables from interfering
-                    "--no-home",  # Don't mount host home directory
                     *selected_mode,
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
