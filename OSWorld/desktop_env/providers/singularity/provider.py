@@ -194,6 +194,31 @@ class SingularityProvider(Provider):
                 runtime_run_dir.mkdir(parents=True, exist_ok=True)
                 (runtime_run_dir / "shm").mkdir(parents=True, exist_ok=True) # Prepare for link destination
 
+                # If the source is a directory, copy existing /run content to avoid shadowing entry.sh
+                dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
+                source_run_dir = dir_path / "run"
+                if source_run_dir.exists() and source_run_dir.is_dir():
+                    for item in os.listdir(source_run_dir):
+                        s = source_run_dir / item
+                        d = runtime_run_dir / item
+                        if s.is_dir():
+                            if d.exists():
+                                shutil.rmtree(d)
+                            shutil.copytree(s, d, symlinks=True)
+                        else:
+                            shutil.copy2(s, d)
+                elif source_sandbox.is_dir() and (source_sandbox / "run").exists():
+                    source_run_dir = source_sandbox / "run"
+                    for item in os.listdir(source_run_dir):
+                        s = source_run_dir / item
+                        d = runtime_run_dir / item
+                        if s.is_dir():
+                            if d.exists():
+                                shutil.rmtree(d)
+                            shutil.copytree(s, d, symlinks=True)
+                        else:
+                            shutil.copy2(s, d)
+
                 # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = runtime_root / "fake_id"
                 with open(fake_id_path, "w") as f:
@@ -259,10 +284,14 @@ class SingularityProvider(Provider):
                 })
 
                 # Define the entry script path. Usually /run/entry.sh or /entry.sh
-                # We'll check which one exists in the source sandbox
+                # We'll check which one exists in the source sandbox or directory
                 entry_script = "/run/entry.sh"
-                if not (source_sandbox / "run/entry.sh").exists():
-                    if (source_sandbox / "entry.sh").exists():
+                dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
+                if not (runtime_run_dir / "entry.sh").exists() and \
+                   not (source_sandbox.is_dir() and (source_sandbox / "run/entry.sh").exists()) and \
+                   not (dir_path.is_dir() and (dir_path / "run/entry.sh").exists()):
+                    if (source_sandbox.is_dir() and (source_sandbox / "entry.sh").exists()) or \
+                       (dir_path.is_dir() and (dir_path / "entry.sh").exists()):
                         entry_script = "/entry.sh"
                     else:
                         # Fallback to run if we can't find entry script
