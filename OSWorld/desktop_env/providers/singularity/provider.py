@@ -192,7 +192,8 @@ class SingularityProvider(Provider):
                 # Create runtime directories for mounting
                 runtime_run_dir = runtime_root / "run"
                 runtime_run_dir.mkdir(parents=True, exist_ok=True)
-                (runtime_run_dir / "shm").mkdir(parents=True, exist_ok=True) # Prepare for link destination
+                # Don't create shm as directory, script wants to symlink it
+                # (runtime_run_dir / "shm").mkdir(parents=True, exist_ok=True) 
 
                 # Create local tmp and xdg runtime for the container
                 runtime_tmp_dir = runtime_root / "tmp"
@@ -203,6 +204,9 @@ class SingularityProvider(Provider):
                 # Create storage directory for QEMU
                 runtime_storage_dir = runtime_root / "storage"
                 runtime_storage_dir.mkdir(parents=True, exist_ok=True)
+
+                # Make everything in runtime_root world-writable to avoid permission issues inside container
+                subprocess.run(f"chmod -R 777 {runtime_root}", shell=True)
 
                 # Create nginx directories
                 runtime_nginx_lib = runtime_root / "var_lib_nginx"
@@ -240,15 +244,13 @@ class SingularityProvider(Provider):
                         else:
                             shutil.copy2(s, d)
                 
-                # Patch entry.sh to use /storage/boot.qcow2 instead of /boot.qcow2
+                # Patch ALL files in runtime_run_dir recursively to redirect /boot.qcow2
                 # This is necessary for read-only SIF images where / is not writable
-                local_entry_sh = runtime_run_dir / "entry.sh"
-                if local_entry_sh.exists():
-                    logger.info("Patching local entry.sh to redirect /boot.qcow2 to /storage/boot.qcow2...")
-                    subprocess.run(f"sed -i 's|/boot.qcow2|/storage/boot.qcow2|g' {local_entry_sh}", shell=True)
-                    # Also patch common temp paths to point to our writable /tmp
-                    subprocess.run(f"sed -i 's|/run/shm|/run/shm_real|g' {local_entry_sh}", shell=True)
-                    (runtime_run_dir / "shm_real").mkdir(parents=True, exist_ok=True)
+                logger.info(f"Patching all scripts in {runtime_run_dir} to redirect /boot.qcow2 to /storage/boot.qcow2...")
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|/boot.qcow2|/storage/boot.qcow2|g' 2>/dev/null || true", shell=True)
+                # Also patch /run/shm to a writable path just in case
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|/run/shm|/tmp/shm_fake|g' 2>/dev/null || true", shell=True)
+                (runtime_tmp_dir / "shm_fake").mkdir(parents=True, exist_ok=True, mode=0o777)
 
                 # Create a fake 'id' command to bypass root checks inside container
                 fake_id_path = runtime_root / "fake_id"
@@ -315,6 +317,7 @@ class SingularityProvider(Provider):
                     "SINGULARITYENV_VM_NET_DEV": "lo", # Fix 'eth0 not found' error
                     "SINGULARITYENV_KVM": kvm_env, # Bypass KVM check if not available
                     "SINGULARITYENV_DHCP": "N", # Bypass bridge creation/DHCP inside container
+                    "SINGULARITYENV_NETWORK": "user", # Force usermode networking
                     "SINGULARITYENV_XDG_RUNTIME_DIR": "/xdg", # Local writable XDG path
                     "VNC_PORT": str(self.vnc_port),
                     "SERVER_PORT": str(self.server_port),
