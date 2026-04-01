@@ -80,8 +80,9 @@ mark_result() {
 echo "===== Host Checks ====="
 df -h /tmp || true
 df -h /public/home/xlwang || true
-echo "Current User Info: $(id)"
-echo "Current User Groups: $(groups)"
+echo "Current User Info (Process): $(id)"
+echo "Current User Groups (Process): $(groups)"
+echo "User Info from DB (Database): $(id $(whoami))"
 echo "SELinux Status: $(getenforce 2>/dev/null || echo 'N/A')"
 echo "KVM Module: $(lsmod | grep kvm || echo 'NOT LOADED')"
 
