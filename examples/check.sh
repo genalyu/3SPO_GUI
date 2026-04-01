@@ -81,6 +81,8 @@ df -h /tmp || true
 df -h /public/home/xlwang || true
 echo "Current User Info: $(id)"
 echo "Current User Groups: $(groups)"
+echo "SELinux Status: $(getenforce 2>/dev/null || echo 'N/A')"
+echo "KVM Module: $(lsmod | grep kvm || echo 'NOT LOADED')"
 
 if [ -e /dev/kvm ]; then
     echo "KVM device found: /dev/kvm"
