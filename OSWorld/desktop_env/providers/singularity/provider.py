@@ -211,9 +211,11 @@ class SingularityProvider(Provider):
                 # Create nginx directories
                 runtime_nginx_lib = runtime_root / "var_lib_nginx"
                 runtime_nginx_log = runtime_root / "var_log_nginx"
+                runtime_misc_dir = runtime_root / "var_lib_misc"
                 runtime_nginx_path = runtime_root / "nginx"
                 runtime_nginx_lib.mkdir(parents=True, exist_ok=True)
                 runtime_nginx_log.mkdir(parents=True, exist_ok=True)
+                runtime_misc_dir.mkdir(parents=True, exist_ok=True)
                 runtime_nginx_path.mkdir(parents=True, exist_ok=True)
 
                 # If the source is a directory, copy existing /run content to avoid shadowing entry.sh
@@ -248,6 +250,15 @@ class SingularityProvider(Provider):
                 # This is necessary for read-only SIF images where / is not writable
                 logger.info(f"Patching all scripts in {runtime_run_dir} to redirect /boot.qcow2 to /storage/boot.qcow2...")
                 subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|/boot.qcow2|/storage/boot.qcow2|g' 2>/dev/null || true", shell=True)
+                
+                # Hard patch KVM check in any script that might be doing it
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|if \[ ! -w /dev/kvm \]|if false|g' 2>/dev/null || true", shell=True)
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|\[ ! -w /dev/kvm \]|false|g' 2>/dev/null || true", shell=True)
+                
+                # Patch out root privilege checks (since we run as non-root in Singularity)
+                logger.info("Patching out root privilege checks in scripts...")
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|\\[ \"$(id -u)\" -ne \"0\" \\]|false|g' 2>/dev/null || true", shell=True)
+                
                 # Also patch /run/shm to a writable path just in case
                 subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|/run/shm|/tmp/shm_fake|g' 2>/dev/null || true", shell=True)
                 (runtime_tmp_dir / "shm_fake").mkdir(parents=True, exist_ok=True, mode=0o777)
@@ -318,6 +329,7 @@ class SingularityProvider(Provider):
                     "SINGULARITYENV_KVM": kvm_env, # Bypass KVM check if not available
                     "SINGULARITYENV_DHCP": "N", # Bypass bridge creation/DHCP inside container
                     "SINGULARITYENV_NETWORK": "user", # Force usermode networking
+                    "SINGULARITYENV_KVM_FORCE": "Y", # Additional flag for some qemu-docker versions
                     "SINGULARITYENV_XDG_RUNTIME_DIR": "/xdg", # Local writable XDG path
                     "VNC_PORT": str(self.vnc_port),
                     "SERVER_PORT": str(self.server_port),
@@ -358,11 +370,13 @@ class SingularityProvider(Provider):
                         "singularity", "exec",
                         *mode_flags,
                         "--bind", f"{runtime_run_dir}:/run",
+                        "--bind", f"{runtime_run_dir}:/var/run",
                         "--bind", f"{runtime_storage_dir}:/storage",
                         "--bind", f"{runtime_tmp_dir}:/tmp",
                         "--bind", f"{runtime_xdg_dir}:/xdg",
                         "--bind", f"{runtime_nginx_lib}:/var/lib/nginx",
                         "--bind", f"{runtime_nginx_log}:/var/log/nginx",
+                        "--bind", f"{runtime_misc_dir}:/var/lib/misc",
                         str(source_sandbox),
                         "/bin/sh", "-c", "echo preflight_ok"
                     ]
@@ -402,11 +416,13 @@ class SingularityProvider(Provider):
 
                 cmd.extend([
                     "--bind", f"{runtime_run_dir}:/run",
+                    "--bind", f"{runtime_run_dir}:/var/run",
                     "--bind", f"{runtime_storage_dir}:/storage",
                     "--bind", f"{runtime_tmp_dir}:/tmp",
                     "--bind", f"{runtime_xdg_dir}:/xdg",
                     "--bind", f"{runtime_nginx_lib}:/var/lib/nginx",
-                    "--bind", f"{runtime_nginx_log}:/var/log/nginx"
+                    "--bind", f"{runtime_nginx_log}:/var/log/nginx",
+                    "--bind", f"{runtime_misc_dir}:/var/lib/misc"
                 ])
                 cmd.append(str(source_sandbox))
                 
