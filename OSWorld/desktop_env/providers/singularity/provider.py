@@ -387,8 +387,12 @@ class SingularityProvider(Provider):
                 preflight_failures = []
                 logger.info(f"Starting preflight loop with {len(preflight_modes)} modes...")
                 for mode_flags in preflight_modes:
-                    # Check if KVM is accessible inside this mode
-                    preflight_inner_cmd = "echo preflight_ok && ls -l /dev/kvm && [ -w /dev/kvm ] && echo kvm_writable || echo kvm_not_writable"
+                    # REAL KVM TEST: Can QEMU initialize KVM accel?
+                    # We check for 'qemu-system-x86_64' and 'kvm' acceleration support
+                    preflight_inner_cmd = (
+                        "echo preflight_ok && "
+                        "qemu-system-x86_64 --accel kvm --help > /dev/null 2>&1 && echo kvm_init_ok || echo kvm_init_failed"
+                    )
                     preflight_cmd = [
                         "singularity", "exec",
                         *mode_flags,
@@ -410,12 +414,12 @@ class SingularityProvider(Provider):
                     return_code, stdout, stderr = self._run_preflight(preflight_cmd, env, timeout=45)
                     
                     if return_code == 0 and "preflight_ok" in stdout:
-                        kvm_status = "WRITABLE" if "kvm_writable" in stdout else "NOT WRITABLE"
+                        kvm_status = "INITIALIZED" if "kvm_init_ok" in stdout else "FAILED (ioctl)"
                         logger.error(f"PREFLIGHT: mode '{mode_str}' WORKED. KVM inside: {kvm_status}")
-                        if "kvm_writable" in stdout:
+                        if "kvm_init_ok" in stdout:
                             selected_mode = mode_flags
                             break
-                        # If KVM not writable, keep searching but remember this as a fallback if nothing better works
+                        # If KVM not initialized, keep searching but remember this as a fallback if nothing better works
                         if selected_mode is None:
                             selected_mode = mode_flags
                     else:

@@ -122,7 +122,11 @@ echo "Testing KVM access inside container with different flags..."
 
 for flags in "--dev" "--dev --cleanenv" "" "--cleanenv"; do
     echo "Testing with flags: [$flags]"
-    singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" /bin/sh -c "ls -l /dev/kvm && [ -w /dev/kvm ] && echo 'INSIDE: KVM IS WRITABLE' || echo 'INSIDE: KVM IS NOT WRITABLE'" || echo "Singularity failed with these flags"
+    # First check file write
+    singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" /bin/sh -c "[ -w /dev/kvm ] && echo 'FILE_WRITE: OK' || echo 'FILE_WRITE: DENIED'" || echo "Singularity failed with these flags"
+    # Then check actual KVM initialization (ioctl)
+    echo "Testing QEMU KVM initialization..."
+    singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" qemu-system-x86_64 --accel kvm --help > /dev/null 2>&1 && echo "QEMU_KVM_INIT: OK" || echo "QEMU_KVM_INIT: DENIED (ioctl failed)"
 done
 
 # --- RUN PYTHON PROVIDER TEST ---
