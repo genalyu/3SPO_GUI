@@ -194,6 +194,10 @@ class SingularityProvider(Provider):
                 runtime_run_dir.mkdir(parents=True, exist_ok=True)
                 (runtime_run_dir / "shm").mkdir(parents=True, exist_ok=True) # Prepare for link destination
 
+                # Create storage directory for QEMU
+                runtime_storage_dir = runtime_root / "storage"
+                runtime_storage_dir.mkdir(parents=True, exist_ok=True)
+
                 # If the source is a directory, copy existing /run content to avoid shadowing entry.sh
                 dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
                 source_run_dir = dir_path / "run"
@@ -313,6 +317,7 @@ class SingularityProvider(Provider):
                         "singularity", "exec",
                         *mode_flags,
                         "--bind", f"{runtime_run_dir}:/run",
+                        "--bind", f"{runtime_storage_dir}:/storage",
                         str(source_sandbox),
                         "/bin/sh", "-c", "echo preflight_ok"
                     ]
@@ -353,7 +358,10 @@ class SingularityProvider(Provider):
                 if runtime_nginx_path:
                     cmd.extend(["--bind", f"{runtime_nginx_path}:/etc/nginx"])
 
-                cmd.extend(["--bind", f"{runtime_run_dir}:/run"])
+                cmd.extend([
+                    "--bind", f"{runtime_run_dir}:/run",
+                    "--bind", f"{runtime_storage_dir}:/storage"
+                ])
                 cmd.append(str(source_sandbox))
                 
                 if entry_script:
