@@ -3,7 +3,6 @@
 #SBATCH --partition=a100
 #SBATCH --nodes=1
 #SBATCH --nodelist=gpu22
-#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=00:30:00
@@ -77,7 +76,6 @@ mark_result() {
     fi
 }
 
-echo
 echo "===== Host Checks ====="
 df -h /tmp || true
 df -h /public/home/xlwang || true
@@ -88,61 +86,37 @@ else
     echo "KVM_ACCESS=NO_DEVICE"
 fi
 
-run_with_timeout "singularity version" 10 singularity --version
-mark_result $?
+# --- Python Environment Setup ---
+echo
+echo "===== Python Environment Setup ====="
+source /public/home/xlwang/jyy/anaconda/etc/profile.d/conda.sh
+conda activate 3spo
+cd /public/home/xlwang/genalyu/3SPO
 
-run_with_timeout "singularity simple host command" 30 singularity exec "$SANDBOX_TARGET" /bin/sh -c 'echo host_exec_ok'
-mark_result $?
+# --- Prepare Local Image ---
+echo
+echo "===== Prepare Local Image ====="
+LOCAL_WORK_DIR="/tmp/${USER}/osworld_diag_${JOB_ID}"
+mkdir -p "$LOCAL_WORK_DIR"
+LOCAL_IMAGE="${LOCAL_WORK_DIR}/Ubuntu.qcow2"
+echo "Copying image to local SSD: $LOCAL_IMAGE"
+cp "$REMOTE_IMG" "$LOCAL_IMAGE"
 
-# If simple command failed, try with --debug for next one
-if [ $? -ne 0 ]; then
-    run_with_timeout "singularity simple command (DEBUG)" 45 singularity -d exec "$SANDBOX_TARGET" /bin/sh -c 'echo host_exec_debug_ok'
-    mark_result $?
-fi
-
-MODES=(
-    "--cleanenv --no-home --writable-tmpfs --no-mount overlay"
-    "--cleanenv --no-home --writable-tmpfs"
-    "--cleanenv --no-home --no-mount overlay"
-    "--cleanenv --no-home"
-    "--cleanenv --containall"
-    "--cleanenv --no-privs"
-    "--cleanenv"
-    ""
-)
-
-MODE_PASS=0
-for mode in "${MODES[@]}"; do
-    run_with_timeout "preflight mode: [${mode:-none}]" 45 bash -lc "singularity exec $mode '$SANDBOX_TARGET' /bin/sh -c 'echo preflight_ok'"
-    rc=$?
-    mark_result $rc
-    if [ $rc -eq 0 ]; then
-        MODE_PASS=$((MODE_PASS + 1))
-    fi
-done
-
-if [ -f "$REMOTE_IMG" ]; then
-    run_with_timeout "bind qcow2 into container" 30 bash -lc "singularity exec --cleanenv --no-home --bind '$REMOTE_IMG':/System.qcow2 '$SANDBOX_TARGET' /bin/sh -c 'test -f /System.qcow2 && echo bind_ok'"
-    mark_result $?
-else
-    echo "SKIP: remote image not found at $REMOTE_IMG"
-fi
-
-if [ -e /dev/kvm ]; then
-    run_with_timeout "kvm bind probe" 30 bash -lc "singularity exec --cleanenv --bind /dev/kvm:/dev/kvm '$SANDBOX_TARGET' /bin/sh -c 'test -e /dev/kvm && echo kvm_bind_ok'"
-    mark_result $?
-fi
+# --- RUN PYTHON PROVIDER TEST ---
+echo
+echo "===== RUN PYTHON PROVIDER TEST ====="
+echo "This will test the actual SingularityProvider class logic (preflight, binds, nginx, etc.)"
+python examples/test_singularity_provider.py "$LOCAL_IMAGE"
+rc=$?
 
 echo
 echo "===== Summary ====="
-echo "PASS_COUNT=$PASS_COUNT"
-echo "FAIL_COUNT=$FAIL_COUNT"
-echo "MODE_PASS=$MODE_PASS"
-
-if [ "$MODE_PASS" -eq 0 ]; then
-    echo "FINAL_RESULT=FAIL: all preflight modes failed or timed out"
-    exit 1
+if [ $rc -eq 0 ]; then
+    echo "FINAL_RESULT=PASS: SingularityProvider successfully started and cleaned up."
+else
+    echo "FINAL_RESULT=FAIL: SingularityProvider failed. Check logs above."
 fi
 
-echo "FINAL_RESULT=PASS: at least one preflight mode works"
-exit 0
+# --- Cleanup ---
+rm -rf "$LOCAL_WORK_DIR"
+exit $rc
