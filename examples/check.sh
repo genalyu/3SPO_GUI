@@ -2,7 +2,6 @@
 #SBATCH --job-name=SuperDiag
 #SBATCH --partition=a100
 #SBATCH --nodes=1
-#SBATCH --nodelist=gpu22
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=00:30:00
