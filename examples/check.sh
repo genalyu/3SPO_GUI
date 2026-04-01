@@ -115,6 +115,16 @@ LOCAL_IMAGE="${LOCAL_WORK_DIR}/Ubuntu.qcow2"
 echo "Copying image to local SSD: $LOCAL_IMAGE"
 cp "$REMOTE_IMG" "$LOCAL_IMAGE"
 
+# --- MANUAL SINGULARITY KVM TEST ---
+echo
+echo "===== MANUAL SINGULARITY KVM TEST ====="
+echo "Testing KVM access inside container with different flags..."
+
+for flags in "--dev" "--dev --cleanenv" "" "--cleanenv"; do
+    echo "Testing with flags: [$flags]"
+    singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" /bin/sh -c "ls -l /dev/kvm && [ -w /dev/kvm ] && echo 'INSIDE: KVM IS WRITABLE' || echo 'INSIDE: KVM IS NOT WRITABLE'" || echo "Singularity failed with these flags"
+done
+
 # --- RUN PYTHON PROVIDER TEST ---
 echo
 echo "===== RUN PYTHON PROVIDER TEST ====="

@@ -386,6 +386,7 @@ class SingularityProvider(Provider):
                 ]
                 selected_mode = None
                 preflight_failures = []
+                logger.info(f"Starting preflight loop with {len(preflight_modes)} modes...")
                 for mode_flags in preflight_modes:
                     # Check if KVM is accessible inside this mode
                     preflight_inner_cmd = "echo preflight_ok && ls -l /dev/kvm && [ -w /dev/kvm ] && echo kvm_writable || echo kvm_not_writable"
@@ -404,12 +405,14 @@ class SingularityProvider(Provider):
                         str(source_sandbox),
                         "/bin/sh", "-c", preflight_inner_cmd
                     ]
-                    return_code, stdout, stderr = self._run_preflight(preflight_cmd, env, timeout=45)
                     
                     mode_str = ' '.join(mode_flags) if mode_flags else '(none)'
+                    logger.debug(f"Testing mode '{mode_str}'...")
+                    return_code, stdout, stderr = self._run_preflight(preflight_cmd, env, timeout=45)
+                    
                     if return_code == 0 and "preflight_ok" in stdout:
                         kvm_status = "WRITABLE" if "kvm_writable" in stdout else "NOT WRITABLE"
-                        logger.info(f"Preflight mode '{mode_str}' worked. KVM inside: {kvm_status}")
+                        logger.error(f"PREFLIGHT: mode '{mode_str}' WORKED. KVM inside: {kvm_status}")
                         if "kvm_writable" in stdout:
                             selected_mode = mode_flags
                             break
@@ -417,9 +420,9 @@ class SingularityProvider(Provider):
                         if selected_mode is None:
                             selected_mode = mode_flags
                     else:
-                        err = f"mode='{mode_str}' failed: rc={return_code}, stderr={stderr[-200:] if stderr else 'empty'}"
+                        err = f"PREFLIGHT: mode '{mode_str}' FAILED: rc={return_code}, stderr={stderr[-200:] if stderr else 'empty'}"
                         preflight_failures.append(err)
-                        logger.warning(err)
+                        logger.error(err)
 
                 if selected_mode is None:
                     raise RuntimeError(f"Singularity preflight failed: {' | '.join(preflight_failures)}")
