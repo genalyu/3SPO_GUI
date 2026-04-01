@@ -321,12 +321,13 @@ class SingularityProvider(Provider):
                         entry_script = None
 
                 preflight_modes = [
-                    ["--cleanenv", "--no-home", "--writable-tmpfs", "--no-mount", "overlay"],
-                    ["--cleanenv", "--no-home", "--writable-tmpfs"],
-                    ["--cleanenv", "--no-home", "--no-mount", "overlay"],
-                    ["--cleanenv", "--no-home"],
-                    ["--cleanenv", "--containall"],
-                    ["--cleanenv"],
+                    ["--cleanenv", "--no-home", "--dev", "--writable-tmpfs", "--no-mount", "overlay"],
+                    ["--cleanenv", "--no-home", "--dev", "--writable-tmpfs"],
+                    ["--cleanenv", "--no-home", "--dev", "--no-mount", "overlay"],
+                    ["--cleanenv", "--no-home", "--dev"],
+                    ["--cleanenv", "--containall", "--dev"],
+                    ["--cleanenv", "--dev"],
+                    ["--dev"],
                     []
                 ]
                 selected_mode = None
@@ -364,9 +365,8 @@ class SingularityProvider(Provider):
                     raise RuntimeError(f"Singularity preflight failed: {' | '.join(preflight_failures)}")
 
                 cmd = [
-                    "singularity", "exec" if entry_script else "run",
-                    # Remove --contain for now to see if it's the cause of basic binary failure
-                    # "--contain", 
+                    "singularity",
+                    "exec" if entry_script else "run",
                     *selected_mode,
                     "--bind", f"{fake_id_path}:/usr/bin/id",
                     "--bind", f"{fake_id_path}:/bin/id",
