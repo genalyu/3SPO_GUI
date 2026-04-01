@@ -198,6 +198,12 @@ class SingularityProvider(Provider):
                 runtime_storage_dir = runtime_root / "storage"
                 runtime_storage_dir.mkdir(parents=True, exist_ok=True)
 
+                # Create nginx directories
+                runtime_nginx_lib = runtime_root / "var_lib_nginx"
+                runtime_nginx_log = runtime_root / "var_log_nginx"
+                runtime_nginx_lib.mkdir(parents=True, exist_ok=True)
+                runtime_nginx_log.mkdir(parents=True, exist_ok=True)
+
                 # If the source is a directory, copy existing /run content to avoid shadowing entry.sh
                 dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
                 source_run_dir = dir_path / "run"
@@ -318,6 +324,8 @@ class SingularityProvider(Provider):
                         *mode_flags,
                         "--bind", f"{runtime_run_dir}:/run",
                         "--bind", f"{runtime_storage_dir}:/storage",
+                        "--bind", f"{runtime_nginx_lib}:/var/lib/nginx",
+                        "--bind", f"{runtime_nginx_log}:/var/log/nginx",
                         str(source_sandbox),
                         "/bin/sh", "-c", "echo preflight_ok"
                     ]
@@ -360,7 +368,9 @@ class SingularityProvider(Provider):
 
                 cmd.extend([
                     "--bind", f"{runtime_run_dir}:/run",
-                    "--bind", f"{runtime_storage_dir}:/storage"
+                    "--bind", f"{runtime_storage_dir}:/storage",
+                    "--bind", f"{runtime_nginx_lib}:/var/lib/nginx",
+                    "--bind", f"{runtime_nginx_log}:/var/log/nginx"
                 ])
                 cmd.append(str(source_sandbox))
                 
