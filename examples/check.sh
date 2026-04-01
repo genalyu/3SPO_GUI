@@ -101,10 +101,11 @@ if [ $? -ne 0 ]; then
 fi
 
 MODES=(
+    "--cleanenv --no-home --writable-tmpfs --no-mount overlay"
     "--cleanenv --no-home --writable-tmpfs"
+    "--cleanenv --no-home --no-mount overlay"
     "--cleanenv --no-home"
     "--cleanenv --containall"
-    "--cleanenv --userns"
     "--cleanenv --no-privs"
     "--cleanenv"
     ""

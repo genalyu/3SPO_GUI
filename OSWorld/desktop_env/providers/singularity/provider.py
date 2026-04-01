@@ -48,8 +48,13 @@ class SingularityProvider(Provider):
         self.port_registry_dir.mkdir(parents=True, exist_ok=True)
         self.lock_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # Default Sandbox path, can be overridden by environment variable
-        self.sandbox_path = os.getenv("OSWORLD_SANDBOX", "/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
+        # Priority: 1. Environment variable 2. SIF file (better for old kernels) 3. Directory Sandbox
+        self.sandbox_path = os.getenv("OSWORLD_SANDBOX")
+        if not self.sandbox_path:
+            sif_path = "/public/home/xlwang/genalyu/3SPO/osworld_uitars.sif"
+            dir_path = "/public/home/xlwang/genalyu/3SPO/osworld-sandbox"
+            self.sandbox_path = sif_path if os.path.exists(sif_path) else dir_path
+
         # Local cache path in /tmp to avoid NFS latency and permission issues
         self.local_sandbox_root = Path("/tmp/osworld_cache")
         self.local_sandbox_root.mkdir(parents=True, exist_ok=True)
@@ -259,7 +264,9 @@ class SingularityProvider(Provider):
                         entry_script = None
 
                 preflight_modes = [
+                    ["--cleanenv", "--no-home", "--writable-tmpfs", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home", "--writable-tmpfs"],
+                    ["--cleanenv", "--no-home", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home"],
                     ["--cleanenv", "--containall"],
                     ["--cleanenv"],
