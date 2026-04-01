@@ -37,11 +37,14 @@ trap cleanup EXIT SIGINT SIGTERM
 echo "Checking KVM acceleration..."
 if [ -e /dev/kvm ]; then
     echo "KVM device exists."
+    ls -l /dev/kvm
+    id
     if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
         echo "KVM permissions are CORRECT."
     else
         echo "KVM permissions are MISSING for user $USER."
-        echo "Try adding '--bind /dev/kvm' to Singularity or contact admin."
+        echo "ERROR: Current user $(whoami) (ID: $(id -u)) cannot write to /dev/kvm."
+        echo "Please ask your admin to run: 'sudo chmod 666 /dev/kvm' or 'sudo usermod -aG kvm $USER'"
     fi
 else
     echo "KVM device NOT FOUND. Expect extremely slow performance."

@@ -79,11 +79,22 @@ mark_result() {
 echo "===== Host Checks ====="
 df -h /tmp || true
 df -h /public/home/xlwang || true
+echo "Current User Info: $(id)"
+echo "Current User Groups: $(groups)"
+
 if [ -e /dev/kvm ]; then
+    echo "KVM device found: /dev/kvm"
     ls -l /dev/kvm || true
-    [ -r /dev/kvm ] && [ -w /dev/kvm ] && echo "KVM_ACCESS=YES" || echo "KVM_ACCESS=NO"
+    if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+        echo "KVM_ACCESS=YES (SUCCESS: Current user has R/W access)"
+    else
+        echo "KVM_ACCESS=NO (FAILURE: Current user LACKS R/W access)"
+        echo "--- SUGGESTION ---"
+        echo "Ask your administrator to run: 'sudo chmod 666 /dev/kvm' on $(hostname)"
+        echo "OR: 'sudo usermod -aG kvm $(whoami)'"
+    fi
 else
-    echo "KVM_ACCESS=NO_DEVICE"
+    echo "KVM_ACCESS=NO_DEVICE (FAILURE: /dev/kvm NOT FOUND)"
 fi
 
 # --- Python Environment Setup ---
