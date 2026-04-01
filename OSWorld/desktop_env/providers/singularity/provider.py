@@ -254,6 +254,16 @@ class SingularityProvider(Provider):
                 # Hard patch KVM check in any script that might be doing it
                 subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|if \[ ! -w /dev/kvm \]|if false|g' 2>/dev/null || true", shell=True)
                 subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|\[ ! -w /dev/kvm \]|false|g' 2>/dev/null || true", shell=True)
+                # Also patch the shell-based write test in proc.sh
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i \"s|if ! sh -c 'echo -n > /dev/kvm' &> /dev/null; then|if false; then|g\" 2>/dev/null || true", shell=True)
+                # Ensure it doesn't exit even if it thinks KVM is missing
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|exit 88|true|g' 2>/dev/null || true", shell=True)
+                # Force KVM_ERR to stay empty
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|KVM_ERR=\"(device file missing)\"|KVM_ERR=\"\"|g' 2>/dev/null || true", shell=True)
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|KVM_ERR=\"(no write access)\"|KVM_ERR=\"\"|g' 2>/dev/null || true", shell=True)
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|KVM_ERR=\"(vmx/svm disabled)\"|KVM_ERR=\"\"|g' 2>/dev/null || true", shell=True)
+                # Bypassing the entire KVM_ERR error block
+                subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|if \[ -n \"\$KVM_ERR\" \]; then|if false; then|g' 2>/dev/null || true", shell=True)
                 
                 # Patch out root privilege checks (since we run as non-root in Singularity)
                 logger.info("Patching out root privilege checks in scripts...")
@@ -296,13 +306,19 @@ class SingularityProvider(Provider):
                 # KVM acceleration is critical
                 kvm_flag = []
                 kvm_env = "Y"
-                if os.path.exists("/dev/kvm"):
+                if os.path.exists("/dev/kvm") and os.access("/dev/kvm", os.W_OK):
                     # We trust the host's 666 permission (as shown in diag)
                     # and bind it directly. We set KVM=Y to force container to use it.
                     kvm_flag = ["--bind", "/dev/kvm:/dev/kvm"]
                 else:
-                    logger.warning("KVM not found! Using software emulation (slow).")
-                    kvm_env = "N"
+                    error_msg = (
+                        "CRITICAL ERROR: KVM device not found or no write access to /dev/kvm!\n"
+                        "OSWorld evaluation REQUIRES KVM acceleration for acceptable performance.\n"
+                        "Please ask your administrator to grant you access: 'sudo chmod 666 /dev/kvm' "
+                        "or add you to the 'kvm' group."
+                    )
+                    logger.error(error_msg)
+                    raise RuntimeError(error_msg)
 
                 # Clean up host environment variables that might interfere with container binaries
                 # Especially LD_LIBRARY_PATH and PYTHONPATH on cluster environments

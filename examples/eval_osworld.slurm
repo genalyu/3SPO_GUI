@@ -5,7 +5,7 @@
 #SBATCH --nodelist=gpu23
 #SBATCH --gres=gpu:2              # 评估通常需要多张卡来跑 vLLM
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=24
+#SBATCH --cpus-per-task=16
 #SBATCH --mem=256G
 #SBATCH --output=/public/home/xlwang/genalyu/3SPO/logs/eval_%j.out
 #SBATCH --error=/public/home/xlwang/genalyu/3SPO/logs/eval_%j.err
