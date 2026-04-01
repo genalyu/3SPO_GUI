@@ -375,15 +375,13 @@ class SingularityProvider(Provider):
                         entry_script = None
 
                 # Define the preflight modes to try
-                # Removed '--dev' as it's not supported in this environment
+                # Re-ordered to try simplest modes first (which worked in manual test)
                 preflight_modes = [
-                    ["--cleanenv", "--no-home", "--writable-tmpfs", "--no-mount", "overlay"],
-                    ["--cleanenv", "--no-home", "--writable-tmpfs"],
-                    ["--cleanenv", "--no-home", "--no-mount", "overlay"],
-                    ["--cleanenv", "--no-home"],
-                    ["--cleanenv", "--containall"],
+                    [],
                     ["--cleanenv"],
-                    []
+                    ["--cleanenv", "--no-home"],
+                    ["--cleanenv", "--no-home", "--writable-tmpfs"],
+                    ["--cleanenv", "--containall"],
                 ]
                 selected_mode = None
                 preflight_failures = []
@@ -432,8 +430,7 @@ class SingularityProvider(Provider):
                     "singularity",
                     "exec" if entry_script else "run",
                     *selected_mode,
-                    "--bind", f"{fake_id_path}:/usr/bin/id",
-                    "--bind", f"{fake_id_path}:/bin/id",
+                    # REMOVED fake_id binding as it causes QEMU ioctl permission issues
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
                 ]
