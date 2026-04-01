@@ -266,14 +266,14 @@ class SingularityProvider(Provider):
 
                 # KVM acceleration is critical
                 kvm_flag = []
+                kvm_env = "Y"
                 if os.path.exists("/dev/kvm"):
-                    # Check if current user can access /dev/kvm
-                    if os.access("/dev/kvm", os.R_OK | os.W_OK):
-                        kvm_flag = ["--bind", "/dev/kvm:/dev/kvm"]
-                    else:
-                        logger.warning("KVM exists but current user lacks permission! VM will be slow.")
+                    # We trust the host's 666 permission (as shown in diag)
+                    # and bind it directly. We set KVM=Y to force container to use it.
+                    kvm_flag = ["--bind", "/dev/kvm:/dev/kvm"]
                 else:
                     logger.warning("KVM not found! Using software emulation (slow).")
+                    kvm_env = "N"
 
                 # Clean up host environment variables that might interfere with container binaries
                 # Especially LD_LIBRARY_PATH and PYTHONPATH on cluster environments
@@ -295,11 +295,13 @@ class SingularityProvider(Provider):
                     "SINGULARITYENV_SERVER_PORT": str(self.server_port),
                     "SINGULARITYENV_CHROMIUM_PORT": str(self.chromium_port),
                     "SINGULARITYENV_VLC_PORT": str(self.vlc_port),
+                    "SINGULARITYENV_VM_NET_DEV": "lo", # Fix 'eth0 not found' error
+                    "SINGULARITYENV_KVM": kvm_env, # Bypass KVM check if not available
+                    "SINGULARITYENV_DHCP": "N", # Bypass bridge creation/DHCP inside container
                     "VNC_PORT": str(self.vnc_port),
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
                     "VLC_PORT": str(self.vlc_port),
-                    "SINGULARITYENV_VM_NET_DEV": "lo", # Fix 'eth0 not found' error
                     "USER": "root", # Fake being root for internal scripts
                     "HOME": "/root" # Container scripts often expect /root
                 })
