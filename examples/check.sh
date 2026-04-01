@@ -126,7 +126,8 @@ for flags in "--dev" "--dev --cleanenv" "" "--cleanenv"; do
     singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" /bin/sh -c "[ -w /dev/kvm ] && echo 'FILE_WRITE: OK' || echo 'FILE_WRITE: DENIED'" || echo "Singularity failed with these flags"
     # Then check actual KVM initialization (ioctl)
     echo "Testing QEMU KVM initialization..."
-    singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" qemu-system-x86_64 --accel kvm --help > /dev/null 2>&1 && echo "QEMU_KVM_INIT: OK" || echo "QEMU_KVM_INIT: DENIED (ioctl failed)"
+    # Try a minimal VM boot to see if KVM actually works
+    singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" qemu-system-x86_64 -machine accel=kvm -display none -vga none -m 128 -nodefaults -monitor stdio -chardev stdio,id=char0 -serial chardev:char0 </dev/null > /dev/null 2>&1 && echo "QEMU_KVM_INIT: OK" || echo "QEMU_KVM_INIT: DENIED (ioctl failed)"
 done
 
 # --- RUN PYTHON PROVIDER TEST ---

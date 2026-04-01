@@ -388,10 +388,10 @@ class SingularityProvider(Provider):
                 logger.info(f"Starting preflight loop with {len(preflight_modes)} modes...")
                 for mode_flags in preflight_modes:
                     # REAL KVM TEST: Can QEMU initialize KVM accel?
-                    # We check for 'qemu-system-x86_64' and 'kvm' acceleration support
+                    # We try a minimal VM boot to see if KVM actually works (opens /dev/kvm and calls ioctl)
                     preflight_inner_cmd = (
                         "echo preflight_ok && "
-                        "qemu-system-x86_64 --accel kvm --help > /dev/null 2>&1 && echo kvm_init_ok || echo kvm_init_failed"
+                        "qemu-system-x86_64 -machine accel=kvm -display none -vga none -m 128 -nodefaults -monitor stdio -chardev stdio,id=char0 -serial chardev:char0 </dev/null > /dev/null 2>&1 && echo kvm_init_ok || echo kvm_init_failed"
                     )
                     preflight_cmd = [
                         "singularity", "exec",
