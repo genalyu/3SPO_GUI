@@ -356,7 +356,7 @@ class SingularityProvider(Provider):
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
                     "VLC_PORT": str(self.vlc_port),
-                    "USER": "root", # Fake being root for internal scripts
+                    # REMOVED USER=root to avoid ioctl permission issues on old kernels
                     "HOME": "/root" # Container scripts often expect /root
                 })
 
@@ -374,14 +374,15 @@ class SingularityProvider(Provider):
                         # Fallback to run if we can't find entry script
                         entry_script = None
 
+                # Define the preflight modes to try
+                # Removed '--dev' as it's not supported in this environment
                 preflight_modes = [
-                    ["--cleanenv", "--no-home", "--dev", "--writable-tmpfs", "--no-mount", "overlay"],
-                    ["--cleanenv", "--no-home", "--dev", "--writable-tmpfs"],
-                    ["--cleanenv", "--no-home", "--dev", "--no-mount", "overlay"],
-                    ["--cleanenv", "--no-home", "--dev"],
-                    ["--cleanenv", "--containall", "--dev"],
-                    ["--cleanenv", "--dev"],
-                    ["--dev"],
+                    ["--cleanenv", "--no-home", "--writable-tmpfs", "--no-mount", "overlay"],
+                    ["--cleanenv", "--no-home", "--writable-tmpfs"],
+                    ["--cleanenv", "--no-home", "--no-mount", "overlay"],
+                    ["--cleanenv", "--no-home"],
+                    ["--cleanenv", "--containall"],
+                    ["--cleanenv"],
                     []
                 ]
                 selected_mode = None
