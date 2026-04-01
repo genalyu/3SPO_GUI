@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+import signal
 import shutil
 import time
 import psutil
@@ -135,6 +136,29 @@ class SingularityProvider(Provider):
         except Exception as e:
             return f"Failed to read process log: {e}"
 
+    def _run_preflight(self, cmd, env, timeout=45):
+        process = subprocess.Popen(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            preexec_fn=os.setsid
+        )
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+            return process.returncode, stdout, stderr
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            except (ProcessLookupError, OSError):
+                pass
+            try:
+                stdout, stderr = process.communicate(timeout=3)
+            except Exception:
+                stdout, stderr = "", ""
+            return None, stdout, stderr
+
     def start_emulator(self, path_to_vm: str, headless: bool, os_type: str, name=None):
         # Use a single lock for all port allocation and container startup
         lock = FileLock(str(self.lock_file))
@@ -204,6 +228,12 @@ class SingularityProvider(Provider):
                         del env[var]
                 
                 env.update(self.environment)
+                singularity_tmp = runtime_root / "singularity_tmp"
+                singularity_cache = runtime_root / "singularity_cache"
+                singularity_tmp.mkdir(parents=True, exist_ok=True)
+                singularity_cache.mkdir(parents=True, exist_ok=True)
+                env["SINGULARITY_TMPDIR"] = str(singularity_tmp)
+                env["SINGULARITY_CACHEDIR"] = str(singularity_cache)
                 # Singularity uses SINGULARITYENV_ prefix to pass vars into the container
                 env.update({
                     "SINGULARITYENV_VNC_PORT": str(self.vnc_port),
@@ -229,7 +259,10 @@ class SingularityProvider(Provider):
                         entry_script = None
 
                 preflight_modes = [
-                    ["--writable-tmpfs"],
+                    ["--cleanenv", "--no-home", "--writable-tmpfs"],
+                    ["--cleanenv", "--no-home"],
+                    ["--cleanenv", "--containall"],
+                    ["--cleanenv"],
                     []
                 ]
                 selected_mode = None
@@ -237,37 +270,26 @@ class SingularityProvider(Provider):
                 for mode_flags in preflight_modes:
                     preflight_cmd = [
                         "singularity", "exec",
-                        "--cleanenv",
-                        "--no-home",
                         *mode_flags,
-                        "--bind", f"{fake_id_path}:/usr/bin/id",
-                        "--bind", f"{fake_id_path}:/bin/id",
-                        *kvm_flag,
                         str(source_sandbox),
-                        "/bin/bash", "-lc", "echo preflight_ok"
+                        "/bin/sh", "-c", "echo preflight_ok"
                     ]
-                    try:
-                        preflight_result = subprocess.run(
-                            preflight_cmd,
-                            env=env,
-                            capture_output=True,
-                            text=True,
-                            timeout=60,
-                            check=True
-                        )
-                        if "preflight_ok" in preflight_result.stdout:
-                            selected_mode = mode_flags
-                            break
+                    return_code, stdout, stderr = self._run_preflight(preflight_cmd, env, timeout=45)
+                    if return_code is None:
                         preflight_failures.append(
-                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} missing marker stdout={preflight_result.stdout[-200:]}"
+                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} timeout>45s"
                         )
-                    except subprocess.TimeoutExpired:
+                        continue
+                    if return_code == 0 and "preflight_ok" in stdout:
+                        selected_mode = mode_flags
+                        break
+                    if return_code != 0:
                         preflight_failures.append(
-                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} timeout>60s"
+                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} exit={return_code} stderr={stderr[-400:]}"
                         )
-                    except subprocess.CalledProcessError as preflight_error:
+                    else:
                         preflight_failures.append(
-                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} exit={preflight_error.returncode} stderr={(preflight_error.stderr or '')[-400:]}"
+                            f"mode={' '.join(mode_flags) if mode_flags else '(none)'} missing marker stdout={stdout[-200:]}"
                         )
 
                 if selected_mode is None:
@@ -335,7 +357,6 @@ class SingularityProvider(Provider):
         if self.process:
             logger.info(f"Stopping Singularity container (PID: {self.process.pid})...")
             try:
-                import signal
                 # Get the process group ID
                 pgid = os.getpgid(self.process.pid)
                 # Force kill the entire process group immediately in software mode
