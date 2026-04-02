@@ -2,7 +2,7 @@
 #SBATCH --job-name=SuperDiag
 #SBATCH --partition=a100
 #SBATCH --nodes=1
-#SBATCH --nodelist=gpu22
+#SBATCH --nodelist=gpu23
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=00:30:00
@@ -97,9 +97,15 @@ if [ -e /dev/kvm ]; then
     ls -l /dev/kvm || true
     # REAL OPEN TEST (Check if we can actually open the device for writing)
     if dd if=/dev/kvm count=0 2>/dev/null; then
-        echo "KVM_OPEN_TEST=OK (Can actually open /dev/kvm)"
+        echo "KVM_READ_TEST=OK"
     else
-        echo "KVM_OPEN_TEST=FAILED (Cannot open /dev/kvm, likely Cgroup restriction)"
+        echo "KVM_READ_TEST=FAILED"
+    fi
+    # RDWR TEST (Crucial for QEMU)
+    if python3 -c "import os; os.open('/dev/kvm', os.O_RDWR)" 2>/dev/null; then
+        echo "KVM_RDWR_TEST=OK"
+    else
+        echo "KVM_RDWR_TEST=FAILED (Cgroup is likely blocking WRITE access)"
     fi
 else
     echo "KVM_ACCESS=NO_DEVICE (FAILURE: /dev/kvm NOT FOUND)"
