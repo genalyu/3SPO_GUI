@@ -8,6 +8,13 @@
 #SBATCH --time=00:30:00
 #SBATCH --output=super_diag_%j.log
 
+# --- FORCE GROUP REFRESH ---
+# If process lacks kvm but DB has it, re-exec with sg kvm
+if ! id | grep -q "kvm" && id $(whoami) | grep -q "kvm"; then
+    echo "RE-EXEC: Process lacks kvm group, but DB has it. Re-executing with sg kvm..."
+    exec sg kvm "$0" "$@"
+fi
+
 set -u
 
 TIMEOUT_BIN=$(command -v timeout || true)
