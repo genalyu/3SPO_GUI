@@ -7,61 +7,19 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=256G
-#SBATCH --output=/public/home/xlwang/genalyu/3SPO/logs/eval_%j.out
-#SBATCH --error=/public/home/xlwang/genalyu/3SPO/logs/eval_%j.err
+#SBATCH --output=/public/home/genalyu/project/3SPO/logs/eval_%j.out
+#SBATCH --error=/public/home/genalyu/project/3SPO/logs/eval_%j.err
 
 source ~/.bashrc
 # --- 关键：环境初始化 (Conda 激活) ---
 # 1. 显式加载 Conda 的基础配置
-source /public/home/xlwang/jyy/anaconda/etc/profile.d/conda.sh  # 路径根据你安装 anaconda/miniconda 的位置修改
-# 或者使用: source $(conda info --base)/etc/profile.d/conda.sh
+source $(conda info --base)/etc/profile.d/conda.sh
 
 # 2. 激活环境
 conda activate 3spo
 
 # 3. 确保当前目录在项目根目录
-cd /public/home/xlwang/genalyu/3SPO  # 替换为你的真实绝对路径
-
-# --- 强力清理函数 ---
-cleanup() {
-    echo "Caught signal! Cleaning up..."
-    pkill -9 -u $USER -f vllm || true
-    # 清理可能残留的 Docker 容器 (以当前任务 ID 命名的)
-    docker ps -a --format '{{.Names}}' | grep "osworld_job_${SLURM_JOB_ID}" | xargs -r docker rm -f || true
-    pkill -9 -u $USER -f qemu || true
-    [ -d "$LOCAL_WORK_DIR" ] && rm -rf "$LOCAL_WORK_DIR"
-    rm -rf /tmp/osworld_cache 2>/dev/null || true
-    echo "Cleanup complete."
-}
-trap cleanup EXIT SIGINT SIGTERM
-
-echo "Checking KVM acceleration..."
-if [ -w /dev/kvm ]; then
-    echo "SUCCESS: KVM device exists and is WRITABLE."
-else
-    echo "WARNING: /dev/kvm is NOT WRITABLE. Trying to fix permissions..."
-    sudo chmod 666 /dev/kvm || echo "Failed to chmod. Expect extremely slow performance."
-fi
-
-# --- 步骤 0: 环境强力清理与本地化 I/O ---
-echo "Cleaning up previous docker containers and processes..."
-docker ps -aq | xargs -r docker rm -f || true
-pkill -9 -u $USER -f qemu || true
-sleep 2
-
-
-LOCAL_WORK_DIR="/tmp/$USER/osworld_runtime_$SLURM_JOB_ID"
-mkdir -p "$LOCAL_WORK_DIR"
-
-echo "Using Local Work Directory: $LOCAL_WORK_DIR"
-REMOTE_IMAGE="/public/home/xlwang/genalyu/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
-LOCAL_IMAGE="$LOCAL_WORK_DIR/Ubuntu.qcow2"
-
-echo "Copying image to local SSD for maximum I/O performance..."
-cp "$REMOTE_IMAGE" "$LOCAL_IMAGE"
-
-# 清理过往残留的临时文件
-rm -rf /tmp/fake_id_* /tmp/singularity_run_* /tmp/osworld_cache 2>/dev/null || true
+cd /public/home/genalyu/project/3SPO  # 替换为你的真实绝对路径
 
 # --- 步骤 1: 启动模型推理服务 ---
 echo "Starting model server..."
@@ -91,7 +49,7 @@ python run_multienv_uitars.py \
     --temperature 0.6 \
     --model qwen2-5-vl-3b\
     --action_space pyautogui \
-    --num_envs 1 \
+    --num_envs 8 \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
