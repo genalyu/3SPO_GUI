@@ -85,28 +85,30 @@ mark_result() {
 
 # --- Host Checks ---
 echo "===== Host Checks ====="
-df -h /tmp || true
-df -h /public/home/xlwang || true
 echo "Current User Info (Process): $(id)"
 echo "Current User Groups (Process): $(groups)"
 echo "User Info from DB (Database): $(id $(whoami))"
 echo "SELinux Status: $(getenforce 2>/dev/null || echo 'N/A')"
 echo "KVM Module: $(lsmod | grep kvm || echo 'NOT LOADED')"
+echo "Process Cgroup: $(cat /proc/self/cgroup)"
 
 if [ -e /dev/kvm ]; then
     echo "KVM device found: /dev/kvm"
     ls -l /dev/kvm || true
-    if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
-        echo "KVM_ACCESS=YES (SUCCESS: Current user has R/W access)"
+    # REAL OPEN TEST (Check if we can actually open the device for writing)
+    if dd if=/dev/kvm count=0 2>/dev/null; then
+        echo "KVM_OPEN_TEST=OK (Can actually open /dev/kvm)"
     else
-        echo "KVM_ACCESS=NO (FAILURE: Current user LACKS R/W access)"
-        echo "--- SUGGESTION ---"
-        echo "Ask your administrator to run: 'sudo chmod 666 /dev/kvm' on $(hostname)"
-        echo "OR: 'sudo usermod -aG kvm $(whoami)'"
+        echo "KVM_OPEN_TEST=FAILED (Cannot open /dev/kvm, likely Cgroup restriction)"
     fi
 else
     echo "KVM_ACCESS=NO_DEVICE (FAILURE: /dev/kvm NOT FOUND)"
 fi
+
+# --- Kernel Logs ---
+echo
+echo "===== Kernel Logs (KVM related) ====="
+dmesg | grep -i kvm | tail -n 20 || echo "Cannot access dmesg"
 
 # --- Host KVM Test (No Container) ---
 echo
