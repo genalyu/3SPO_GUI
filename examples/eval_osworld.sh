@@ -1,39 +1,7 @@
 #!/bin/bash
-
-# --- 关键：环境初始化 (Conda 激活) ---
-# 1. 显式加载 Conda 的基础配置
-CONDA_BASE=$(conda info --base 2>/dev/null || echo "$HOME/anaconda3")
-if [ -f "${CONDA_BASE}/etc/profile.d/conda.sh" ]; then
-    source "${CONDA_BASE}/etc/profile.d/conda.sh"
-else
-    echo "Warning: conda.sh not found at ${CONDA_BASE}/etc/profile.d/conda.sh"
-fi
-
-# 2. 激活环境
 conda activate 3spo || echo "Warning: failed to activate conda environment 3spo"
-
-# 3. 确保当前目录在项目根目录
-# 获取脚本所在目录的绝对路径，然后切换到父目录（项目根目录）
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-cd "$SCRIPT_DIR/.." || exit
-
-# 定义清理函数
-cleanup() {
-    echo "Stopping model server (PID: $SERVER_PID)..."
-    if [ -n "$SERVER_PID" ]; then
-        # 杀掉 start_server.sh 及其子进程
-        pkill -P $SERVER_PID
-        kill $SERVER_PID
-    fi
-    exit 0
-}
-
-# 捕获信号以运行清理
-trap cleanup SIGINT SIGTERM
-
 # --- 步骤 1: 启动模型推理服务 ---
 echo "Starting model server on 8 GPUs..."
-mkdir -p logs
 # 使用当前时间戳作为日志名
 LOG_FILE="logs/vllm_debug_$(date +%Y%m%d_%H%M%S).log"
 # 传入 8 以便启动 8 个服务，对应 8 个 GPU
