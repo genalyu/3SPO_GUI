@@ -8,13 +8,6 @@
 #SBATCH --time=00:30:00
 #SBATCH --output=super_diag_%j.log
 
-# --- FORCE GROUP REFRESH ---
-# If process lacks kvm but DB has it, re-exec with sg kvm
-if ! id | grep -q "kvm" && id $(whoami) | grep -q "kvm"; then
-    echo "RE-EXEC: Process lacks kvm group, but DB has it. Re-executing with sg kvm..."
-    exec sg kvm "$0" "$@"
-fi
-
 set -u
 
 TIMEOUT_BIN=$(command -v timeout || true)
@@ -46,86 +39,19 @@ echo "Date: $(date '+%F %T')"
 echo "Sandbox: $SANDBOX_TARGET"
 echo "Log: $LOG_FILE"
 
-if [ -z "$TIMEOUT_BIN" ]; then
-    echo "FATAL: timeout command not found."
-    exit 2
-fi
-
-run_with_timeout() {
-    local name="$1"
-    local sec="$2"
-    shift 2
-    echo
-    echo "===== TEST: $name (timeout ${sec}s) ====="
-    set +e
-    "$TIMEOUT_BIN" -k 5 "${sec}s" "$@"
-    local rc=$?
-    set -e
-    if [ $rc -eq 0 ]; then
-        echo "RESULT: PASS - $name"
-    elif [ $rc -eq 124 ]; then
-        echo "RESULT: TIMEOUT - $name"
-    else
-        echo "RESULT: FAIL($rc) - $name"
-    fi
-    return $rc
-}
-
-PASS_COUNT=0
-FAIL_COUNT=0
-
-mark_result() {
-    local rc="$1"
-    if [ "$rc" -eq 0 ]; then
-        PASS_COUNT=$((PASS_COUNT + 1))
-    else
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-    fi
-}
-
 # --- Host Checks ---
+echo
 echo "===== Host Checks ====="
-echo "Current User Info (Process): $(id)"
-echo "Current User Groups (Process): $(groups)"
-echo "User Info from DB (Database): $(id $(whoami))"
-echo "SELinux Status: $(getenforce 2>/dev/null || echo 'N/A')"
-echo "KVM Module: $(lsmod | grep kvm || echo 'NOT LOADED')"
-echo "Process Cgroup: $(cat /proc/self/cgroup)"
-
+echo "Current User Info: $(id)"
+echo "KVM device info: $(ls -l /dev/kvm 2>/dev/null || echo 'Not found')"
 if [ -e /dev/kvm ]; then
-    echo "KVM device found: /dev/kvm"
-    ls -l /dev/kvm || true
-    # REAL OPEN TEST (Check if we can actually open the device for writing)
-    if dd if=/dev/kvm count=0 2>/dev/null; then
-        echo "KVM_READ_TEST=OK"
-    else
-        echo "KVM_READ_TEST=FAILED"
-    fi
-    # RDWR TEST (Crucial for QEMU)
+    [ -r /dev/kvm ] && [ -w /dev/kvm ] && echo "KVM_ACCESS=YES" || echo "KVM_ACCESS=NO"
+    # Basic KVM init test
     if python3 -c "import os; os.open('/dev/kvm', os.O_RDWR)" 2>/dev/null; then
         echo "KVM_RDWR_TEST=OK"
     else
-        echo "KVM_RDWR_TEST=FAILED (Cgroup is likely blocking WRITE access)"
+        echo "KVM_RDWR_TEST=FAILED"
     fi
-else
-    echo "KVM_ACCESS=NO_DEVICE (FAILURE: /dev/kvm NOT FOUND)"
-fi
-
-# --- Kernel Logs ---
-echo
-echo "===== Kernel Logs (KVM related) ====="
-dmesg | grep -i kvm | tail -n 20 || echo "Cannot access dmesg"
-
-# --- Host KVM Test (No Container) ---
-echo
-echo "===== Host KVM Test (No Container) ====="
-echo "Testing QEMU KVM initialization directly on host..."
-# Using the qemu binary from the environment or system
-QEMU_BIN=$(command -v qemu-system-x86_64 || echo "/usr/libexec/qemu-kvm")
-if [ -x "$QEMU_BIN" ]; then
-    $QEMU_BIN -machine accel=kvm -display none -vga none -m 128 -nodefaults -monitor stdio -chardev stdio,id=char0 -serial chardev:char0 </dev/null > /dev/null 2>&1 && echo "HOST_KVM_INIT: OK" || echo "HOST_KVM_INIT: DENIED (ioctl failed on host)"
-else
-    echo "HOST_KVM_INIT: ERROR (QEMU binary not found on host)"
 fi
 
 # --- Python Environment Setup ---
@@ -144,34 +70,18 @@ LOCAL_IMAGE="${LOCAL_WORK_DIR}/Ubuntu.qcow2"
 echo "Copying image to local SSD: $LOCAL_IMAGE"
 cp "$REMOTE_IMG" "$LOCAL_IMAGE"
 
-# --- MANUAL SINGULARITY KVM TEST ---
-echo
-echo "===== MANUAL SINGULARITY KVM TEST ====="
-echo "Testing KVM access inside container with different flags..."
-
-for flags in "--dev" "--dev --cleanenv" "" "--cleanenv"; do
-    echo "Testing with flags: [$flags]"
-    # First check file write
-    singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" /bin/sh -c "[ -w /dev/kvm ] && echo 'FILE_WRITE: OK' || echo 'FILE_WRITE: DENIED'" || echo "Singularity failed with these flags"
-    # Then check actual KVM initialization (ioctl)
-    echo "Testing QEMU KVM initialization..."
-    # Try a minimal VM boot to see if KVM actually works
-    singularity exec $flags --bind /dev/kvm:/dev/kvm "$SANDBOX_TARGET" qemu-system-x86_64 -machine accel=kvm -display none -vga none -m 128 -nodefaults -monitor stdio -chardev stdio,id=char0 -serial chardev:char0 </dev/null > /dev/null 2>&1 && echo "QEMU_KVM_INIT: OK" || echo "QEMU_KVM_INIT: DENIED (ioctl failed)"
-done
-
 # --- RUN PYTHON PROVIDER TEST ---
 echo
 echo "===== RUN PYTHON PROVIDER TEST ====="
-echo "This will test the actual SingularityProvider class logic (preflight, binds, nginx, etc.)"
 python examples/test_singularity_provider.py "$LOCAL_IMAGE"
 rc=$?
 
 echo
 echo "===== Summary ====="
 if [ $rc -eq 0 ]; then
-    echo "FINAL_RESULT=PASS: SingularityProvider successfully started and cleaned up."
+    echo "FINAL_RESULT=PASS"
 else
-    echo "FINAL_RESULT=FAIL: SingularityProvider failed. Check logs above."
+    echo "FINAL_RESULT=FAIL"
 fi
 
 # --- Cleanup ---

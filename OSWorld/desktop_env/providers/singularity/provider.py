@@ -311,19 +311,8 @@ class SingularityProvider(Provider):
                     # and bind it directly. We set KVM=Y to force container to use it.
                     kvm_flag = ["--bind", "/dev/kvm:/dev/kvm"]
                 else:
-                    error_msg = (
-                        "\n" + "="*80 + "\n"
-                        "CRITICAL ERROR: KVM acceleration is required but not accessible!\n"
-                        "The Singularity container cannot start the VM with KVM acceleration because:\n"
-                        "1. /dev/kvm does not exist OR\n"
-                        "2. Current user " + os.getlogin() + " (ID: " + str(os.getuid()) + ") lacks write permission to /dev/kvm.\n\n"
-                        "TO FIX THIS, please ask your administrator to:\n"
-                        "   Option A: Run 'sudo chmod 666 /dev/kvm' on the compute node.\n"
-                        "   Option B: Add you to the 'kvm' group: 'sudo usermod -aG kvm " + os.getlogin() + "'\n"
-                        "="*80 + "\n"
-                    )
-                    logger.error(error_msg)
-                    raise RuntimeError(error_msg)
+                    logger.warning("KVM not found or no write access! Using software emulation (slow).")
+                    kvm_env = "N"
 
                 # Clean up host environment variables that might interfere with container binaries
                 # Especially LD_LIBRARY_PATH and PYTHONPATH on cluster environments
