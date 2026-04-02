@@ -26,7 +26,8 @@ cd /public/home/xlwang/genalyu/3SPO  # 替换为你的真实绝对路径
 cleanup() {
     echo "Caught signal! Cleaning up..."
     pkill -9 -u $USER -f vllm || true
-    pkill -9 -u $USER -f singularity || true
+    # 清理可能残留的 Docker 容器 (以当前任务 ID 命名的)
+    docker ps -a --format '{{.Names}}' | grep "osworld_job_${SLURM_JOB_ID}" | xargs -r docker rm -f || true
     pkill -9 -u $USER -f qemu || true
     [ -d "$LOCAL_WORK_DIR" ] && rm -rf "$LOCAL_WORK_DIR"
     rm -rf /tmp/osworld_cache 2>/dev/null || true
@@ -35,23 +36,16 @@ cleanup() {
 trap cleanup EXIT SIGINT SIGTERM
 
 echo "Checking KVM acceleration..."
-if [ -e /dev/kvm ]; then
-    echo "KVM device exists."
-    ls -l /dev/kvm
-    id
-    if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
-        echo "KVM permissions are CORRECT."
-    else
-        echo "KVM permissions are MISSING for user $USER."
-        echo "ERROR: Current user $(whoami) (ID: $(id -u)) cannot write to /dev/kvm."
-        echo "Please ask your admin to run: 'sudo chmod 666 /dev/kvm' or 'sudo usermod -aG kvm $USER'"
-    fi
+if [ -w /dev/kvm ]; then
+    echo "SUCCESS: KVM device exists and is WRITABLE."
 else
-    echo "KVM device NOT FOUND. Expect extremely slow performance."
+    echo "WARNING: /dev/kvm is NOT WRITABLE. Trying to fix permissions..."
+    sudo chmod 666 /dev/kvm || echo "Failed to chmod. Expect extremely slow performance."
 fi
+
 # --- 步骤 0: 环境强力清理与本地化 I/O ---
-echo "Cleaning up previous zombie processes..."
-pkill -9 -u $USER -f singularity || true
+echo "Cleaning up previous docker containers and processes..."
+docker ps -aq | xargs -r docker rm -f || true
 pkill -9 -u $USER -f qemu || true
 sleep 2
 
@@ -102,6 +96,7 @@ python run_multienv_uitars.py \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
     --path_to_vm "$LOCAL_IMAGE" \
+    --provider docker \
     --server_ip http://127.0.0.1
 
 # --- 步骤 3: 清理 ---

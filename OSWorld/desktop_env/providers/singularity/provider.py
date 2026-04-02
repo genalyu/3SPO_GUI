@@ -303,15 +303,13 @@ class SingularityProvider(Provider):
                     logger.warning("Could not find source nginx config to patch! Nginx may fail to bind port 80.")
                     runtime_nginx_path = None
 
-                # KVM acceleration is critical
+                # KVM acceleration detection (Restored to simple mode for Docker-friendly clusters)
                 kvm_flag = []
                 kvm_env = "Y"
                 if os.path.exists("/dev/kvm") and os.access("/dev/kvm", os.W_OK):
-                    # We trust the host's 666 permission (as shown in diag)
-                    # and bind it directly. We set KVM=Y to force container to use it.
                     kvm_flag = ["--bind", "/dev/kvm:/dev/kvm"]
                 else:
-                    logger.warning("KVM not found or no write access! Using software emulation (slow).")
+                    logger.warning("KVM not found or no write access! Using software emulation.")
                     kvm_env = "N"
 
                 # Clean up host environment variables that might interfere with container binaries
