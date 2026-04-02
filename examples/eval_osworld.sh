@@ -1,4 +1,3 @@
-conda activate 3spo || echo "Warning: failed to activate conda environment 3spo"
 # --- 步骤 1: 启动模型推理服务 ---
 echo "Starting model server on 8 GPUs..."
 # 使用当前时间戳作为日志名
