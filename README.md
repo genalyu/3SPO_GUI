@@ -74,7 +74,18 @@ nohup bash start_server.sh &
 
 ### 2. **Run Evaluation Script**
 
-Navigate into the OSWorld directory and execute the evaluation script:
+If you are using SLURM, you can use the provided script:
+```bash
+sbatch examples/eval_osworld.slurm
+```
+
+If you are running directly on a machine with GPUs (e.g., 8x H200), use the local version:
+```bash
+chmod +x examples/eval_osworld.sh
+bash examples/eval_osworld.sh
+```
+
+Navigate into the OSWorld directory and execute the evaluation script manually if needed:
 
 ```bash
 cd OSWorld

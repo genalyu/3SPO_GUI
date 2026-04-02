@@ -7,7 +7,7 @@ filelock==3.18.0
 flash_attn==2.7.4.post1
 liger_kernel==0.5.6
 mathruler==0.1.0
-mlflow==2.22.0
+mlflow==2.10.0
 omegaconf==2.3.0
 Pillow==11.2.1
 psutil==6.1.0
