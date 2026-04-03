@@ -1,9 +1,12 @@
+#!/bin/bash
+source /public/home/genalyu/miniconda3/etc/profile.d/conda.sh
+conda activate 3spo
 # --- 步骤 1: 启动模型推理服务 ---
 echo "Starting model server on 8 GPUs..."
 # 使用当前时间戳作为日志名
 LOG_FILE="logs/vllm_debug_$(date +%Y%m%d_%H%M%S).log"
 # 传入 8 以便启动 8 个服务，对应 8 个 GPU
-bash start_server.sh 8 > "$LOG_FILE" 2>&1 &
+bash start_server.sh 1 > "$LOG_FILE" 2>&1 &
 SERVER_PID=$!
 
 echo "Waiting for vLLM to be ready (logging to $LOG_FILE)..."
@@ -40,7 +43,7 @@ python run_multienv_uitars.py \
     --temperature 0.6 \
     --model qwen2-5-vl-3b \
     --action_space pyautogui \
-    --num_envs 8 \
+    --num_envs 1 \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
