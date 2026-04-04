@@ -19,8 +19,8 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Start processes
-# 设置你想使用的 GPU 数量，默认为 1
-NUM_GPUS=1
+# 设置你想使用的 GPU 数量，可以通过参数传入，默认为 1
+NUM_GPUS=${1:-1}
 
 for i in $(seq 0 $((NUM_GPUS - 1))); do
     CUDA_VISIBLE_DEVICES=$i  \

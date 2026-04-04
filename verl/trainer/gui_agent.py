@@ -529,7 +529,7 @@ class EnvWorker():
         print('Start to create desktop_env.')
         self.env = DesktopEnv(
             # provider_name="docker", 
-            provider_name="singularity",
+            provider_name="apptainer",
             action_space="pyautogui",
             screen_size=(1920, 1080),
             cache_dir=f"cache_dirs/cache_0",

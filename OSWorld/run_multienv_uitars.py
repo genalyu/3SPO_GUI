@@ -112,6 +112,8 @@ def config() -> argparse.Namespace:
     parser.add_argument("--server_ip", type=str, default="http://10.1.1.3")
     parser.add_argument("--server_port", type=int, default=9000)
     parser.add_argument("--trial-id", type=str, default="0")
+    parser.add_argument("--provider", type=str, default="apptainer", choices=["docker", "apptainer", "singularity", "vmware", "virtualbox"])
+    parser.add_argument("--os_type", type=str, default="Ubuntu", choices=["Ubuntu", "Windows"])
     args = parser.parse_args()
 
     return args
@@ -252,8 +254,8 @@ def test(args: argparse.Namespace, test_all_meta: dict) -> None:
             action_space=agent.action_space,
             screen_size=(args.screen_width, args.screen_height),
             headless=args.headless,
-            os_type = "Ubuntu",
-            provider_name="singularity",
+            os_type=args.os_type,
+            provider_name=args.provider,
             require_a11y_tree=args.observation_type
             in ["a11y_tree", "screenshot_a11y_tree", "som"],
         )

@@ -1,2 +1,2 @@
-from desktop_env.providers.singularity.manager import SingularityVMManager
-from desktop_env.providers.singularity.provider import SingularityProvider
+from desktop_env.providers.singularity.manager import ApptainerVMManager
+from desktop_env.providers.singularity.provider import ApptainerProvider

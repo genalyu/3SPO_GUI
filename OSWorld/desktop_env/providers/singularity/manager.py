@@ -1,10 +1,10 @@
 from desktop_env.providers.base import VMManager
 import logging
 
-logger = logging.getLogger("desktopenv.providers.singularity.SingularityVMManager")
+logger = logging.getLogger("desktopenv.providers.apptainer.ApptainerVMManager")
 logger.setLevel(logging.INFO)
 
-class SingularityVMManager(VMManager):
+class ApptainerVMManager(VMManager):
     def __init__(self, registry_path=""):
         pass
 
@@ -27,6 +27,6 @@ class SingularityVMManager(VMManager):
         pass
 
     def get_vm_path(self, *args, **kwargs):
-        # For Singularity, we usually pass the path directly via command line
+        # For Apptainer, we usually pass the path directly via command line
         # This is a fallback if no path is provided
         return ""

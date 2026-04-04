@@ -5,7 +5,7 @@ import logging
 # Add OSWorld to sys.path to import the provider
 sys.path.append(os.path.join(os.getcwd(), "OSWorld"))
 
-from desktop_env.providers.singularity.provider import SingularityProvider
+from desktop_env.providers.singularity.provider import ApptainerProvider
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,12 +15,12 @@ logger = logging.getLogger("test_provider")
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python test_singularity_provider.py <path_to_vm>")
+        print("Usage: python test_apptainer_provider.py <path_to_vm>")
         sys.exit(1)
     
     path_to_vm = os.path.abspath(sys.argv[1])
     
-    provider = SingularityProvider()
+    provider = ApptainerProvider()
     try:
         logger.info(f"Attempting to start emulator with VM: {path_to_vm}")
         # This will call the actual logic in provider.py, including preflight and mounts

@@ -11,7 +11,7 @@ from pathlib import Path
 import subprocess
 from desktop_env.providers.base import Provider
 
-logger = logging.getLogger("desktopenv.providers.singularity.SingularityProvider")
+logger = logging.getLogger("desktopenv.providers.apptainer.ApptainerProvider")
 logger.setLevel(logging.INFO)
 
 WAIT_TIME = 3
@@ -23,15 +23,19 @@ class PortAllocationError(Exception):
     pass
 
 
-class SingularityProvider(Provider):
+class ApptainerProvider(Provider):
     def __init__(self, region: str = None):
         super().__init__(region)
-        # Check if singularity is available
+        # Check if apptainer is available
         try:
-            result = subprocess.run(["singularity", "--version"], capture_output=True, check=True)
-            logger.info(f"Using Singularity: {result.stdout.decode().strip()}")
+            result = subprocess.run(["apptainer", "--version"], capture_output=True, check=True)
+            logger.info(f"Using Apptainer: {result.stdout.decode().strip()}")
         except (subprocess.CalledProcessError, FileNotFoundError):
-            raise RuntimeError("Singularity not found! Please install Singularity to use this provider.")
+            try:
+                result = subprocess.run(["singularity", "--version"], capture_output=True, check=True)
+                logger.info(f"Using Singularity (via apptainer fallback): {result.stdout.decode().strip()}")
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                raise RuntimeError("Apptainer/Singularity not found! Please install Apptainer to use this provider.")
 
         self.server_port = None
         self.vnc_port = None
@@ -43,8 +47,8 @@ class SingularityProvider(Provider):
         self.environment = {"DISK_SIZE": "32G", "RAM_SIZE": "4G", "CPU_CORES": "4"}
 
         temp_dir = Path(os.getenv('TEMP') if platform.system() == 'Windows' else '/tmp')
-        self.lock_file = temp_dir / "singularity_port_allocation.lck"
-        self.port_registry_dir = temp_dir / "singularity_port_registry"
+        self.lock_file = temp_dir / "apptainer_port_allocation.lck"
+        self.port_registry_dir = temp_dir / "apptainer_port_registry"
         self.port_registry_dir.mkdir(parents=True, exist_ok=True)
         self.lock_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -106,8 +110,8 @@ class SingularityProvider(Provider):
             # Check if the process is still alive
             if self.process and self.process.poll() is not None:
                 error_msg = self._read_process_log_tail()
-                logger.error(f"Singularity process died. Error: {error_msg}")
-                raise RuntimeError(f"Singularity process died: {error_msg}")
+                logger.error(f"Apptainer process died. Error: {error_msg}")
+                raise RuntimeError(f"Apptainer process died: {error_msg}")
 
             try:
                 response = requests.get(
@@ -320,25 +324,25 @@ class SingularityProvider(Provider):
                         del env[var]
                 
                 env.update(self.environment)
-                singularity_tmp = runtime_root / "singularity_tmp"
-                singularity_cache = runtime_root / "singularity_cache"
-                singularity_tmp.mkdir(parents=True, exist_ok=True)
-                singularity_cache.mkdir(parents=True, exist_ok=True)
-                env["SINGULARITY_TMPDIR"] = str(singularity_tmp)
-                env["SINGULARITY_CACHEDIR"] = str(singularity_cache)
-                env["SINGULARITY_DISABLE_CACHE"] = "True"
-                # Singularity uses SINGULARITYENV_ prefix to pass vars into the container
+                apptainer_tmp = runtime_root / "apptainer_tmp"
+                apptainer_cache = runtime_root / "apptainer_cache"
+                apptainer_tmp.mkdir(parents=True, exist_ok=True)
+                apptainer_cache.mkdir(parents=True, exist_ok=True)
+                env["APPTAINER_TMPDIR"] = str(apptainer_tmp)
+                env["APPTAINER_CACHEDIR"] = str(apptainer_cache)
+                env["APPTAINER_DISABLE_CACHE"] = "True"
+                # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
                 env.update({
-                    "SINGULARITYENV_VNC_PORT": str(self.vnc_port),
-                    "SINGULARITYENV_SERVER_PORT": str(self.server_port),
-                    "SINGULARITYENV_CHROMIUM_PORT": str(self.chromium_port),
-                    "SINGULARITYENV_VLC_PORT": str(self.vlc_port),
-                    "SINGULARITYENV_VM_NET_DEV": "lo", # Fix 'eth0 not found' error
-                    "SINGULARITYENV_KVM": kvm_env, # Bypass KVM check if not available
-                    "SINGULARITYENV_DHCP": "N", # Bypass bridge creation/DHCP inside container
-                    "SINGULARITYENV_NETWORK": "user", # Force usermode networking
-                    "SINGULARITYENV_KVM_FORCE": "Y", # Additional flag for some qemu-docker versions
-                    "SINGULARITYENV_XDG_RUNTIME_DIR": "/xdg", # Local writable XDG path
+                    "APPTAINERENV_VNC_PORT": str(self.vnc_port),
+                    "APPTAINERENV_SERVER_PORT": str(self.server_port),
+                    "APPTAINERENV_CHROMIUM_PORT": str(self.chromium_port),
+                    "APPTAINERENV_VLC_PORT": str(self.vlc_port),
+                    "APPTAINERENV_VM_NET_DEV": "lo", # Fix 'eth0 not found' error
+                    "APPTAINERENV_KVM": kvm_env, # Bypass KVM check if not available
+                    "APPTAINERENV_DHCP": "N", # Bypass bridge creation/DHCP inside container
+                    "APPTAINERENV_NETWORK": "user", # Force usermode networking
+                    "APPTAINERENV_KVM_FORCE": "Y", # Additional flag for some qemu-docker versions
+                    "APPTAINERENV_XDG_RUNTIME_DIR": "/xdg", # Local writable XDG path
                     "VNC_PORT": str(self.vnc_port),
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
@@ -381,7 +385,7 @@ class SingularityProvider(Provider):
                         "qemu-system-x86_64 -machine accel=kvm -display none -vga none -m 128 -nodefaults -monitor stdio -chardev stdio,id=char0 -serial chardev:char0 </dev/null > /dev/null 2>&1 && echo kvm_init_ok || echo kvm_init_failed"
                     )
                     preflight_cmd = [
-                        "singularity", "exec",
+                        "apptainer", "exec",
                         *mode_flags,
                         "--bind", f"{runtime_run_dir}:/run",
                         "--bind", f"{runtime_run_dir}:/var/run",
@@ -415,10 +419,10 @@ class SingularityProvider(Provider):
                         logger.error(err)
 
                 if selected_mode is None:
-                    raise RuntimeError(f"Singularity preflight failed: {' | '.join(preflight_failures)}")
+                    raise RuntimeError(f"Apptainer preflight failed: {' | '.join(preflight_failures)}")
 
                 cmd = [
-                    "singularity",
+                    "apptainer",
                     "exec" if entry_script else "run",
                     *selected_mode,
                     # REMOVED fake_id binding as it causes QEMU ioctl permission issues
@@ -444,8 +448,8 @@ class SingularityProvider(Provider):
                 if entry_script:
                     cmd.extend(["/bin/bash", entry_script])
 
-                logger.info(f"Starting Singularity (Port {self.server_port}, mode: {' '.join(selected_mode) if selected_mode else '(none)'}): {' '.join(cmd)}")
-                self.process_log_path = str(runtime_root / "singularity_startup.log")
+                logger.info(f"Starting Apptainer (Port {self.server_port}, mode: {' '.join(selected_mode) if selected_mode else '(none)'}): {' '.join(cmd)}")
+                self.process_log_path = str(runtime_root / "apptainer_startup.log")
                 self.process_log_file = open(self.process_log_path, "ab")
                 self.process = subprocess.Popen(
                     cmd,
@@ -462,11 +466,11 @@ class SingularityProvider(Provider):
             # Wait for VM to be ready
             self._wait_for_vm_ready()
 
-            logger.info(f"Started Singularity container with ports - VNC: {self.vnc_port}, "
+            logger.info(f"Started Apptainer container with ports - VNC: {self.vnc_port}, "
                        f"Server: {self.server_port}, Chrome: {self.chromium_port}, VLC: {self.vlc_port}")
 
         except Exception as e:
-            logger.error(f"Error starting Singularity container: {e}")
+            logger.error(f"Error starting Apptainer container: {e}")
             self.stop_emulator(path_to_vm)
             raise e
 
@@ -476,14 +480,14 @@ class SingularityProvider(Provider):
         return f"localhost:{self.server_port}:{self.chromium_port}:{self.vnc_port}:{self.vlc_port}"
 
     def save_state(self, path_to_vm: str, snapshot_name: str):
-        raise NotImplementedError("Snapshots not available for Singularity provider")
+        raise NotImplementedError("Snapshots not available for Apptainer provider")
 
     def revert_to_snapshot(self, path_to_vm: str, snapshot_name: str):
         self.stop_emulator(path_to_vm)
 
     def stop_emulator(self, path_to_vm: str):
         if self.process:
-            logger.info(f"Stopping Singularity container (PID: {self.process.pid})...")
+            logger.info(f"Stopping Apptainer container (PID: {self.process.pid})...")
             try:
                 # Use psutil to find all child processes (like QEMU) and kill them recursively
                 parent = psutil.Process(self.process.pid)
@@ -526,7 +530,7 @@ class SingularityProvider(Provider):
         self.vlc_port = None
     
     def pause_emulator(self):
-        # Singularity doesn't have a direct pause command like Docker
+        # Apptainer doesn't have a direct pause command like Docker
         pass
 
     def unpause_emulator(self):
