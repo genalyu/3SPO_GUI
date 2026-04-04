@@ -187,7 +187,7 @@ class ApptainerProvider(Provider):
                 if not os.path.exists(self.sandbox_path):
                     raise FileNotFoundError(f"SIF image or Sandbox directory not found: {self.sandbox_path}")
 
-                source_sandbox = Path(self.sandbox_path)
+                source_sandbox = Path(self.sandbox_path).absolute()
                 # If it's a SIF file, we don't treat it as a directory for internal path joins
                 is_sif = source_sandbox.is_file() and source_sandbox.suffix == '.sif'
                 
@@ -366,7 +366,8 @@ class ApptainerProvider(Provider):
                         entry_script = "/entry.sh"
                     else:
                         # Fallback to run if we can't find entry script
-                        entry_script = None
+                        # SIF images often have their own %runscript, but we prefer entry.sh if available
+                        entry_script = None if is_sif else "/run/entry.sh"
 
                 # Define the preflight modes to try
                 # Re-ordered to try simplest modes first (which worked in manual test)
@@ -516,13 +517,15 @@ class ApptainerProvider(Provider):
         
         # Cleanup regardless of process state
         self._release_ports()
-        if hasattr(self, 'fake_id_path') and self.fake_id_path.exists():
+        if hasattr(self, 'fake_id_path') and self.fake_id_path and self.fake_id_path.exists():
             try:
                 self.fake_id_path.unlink()
             except:
                 pass
-        if hasattr(self, 'runtime_root') and self.runtime_root.exists():
+        if hasattr(self, 'runtime_root') and self.runtime_root and self.runtime_root.exists():
             try:
+                # IMPORTANT: DO NOT delete the SIF file! 
+                # Only delete the runtime directories we created.
                 shutil.rmtree(self.runtime_root)
             except:
                 pass
