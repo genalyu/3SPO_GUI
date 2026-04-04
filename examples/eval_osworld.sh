@@ -31,15 +31,22 @@ cd OSWorld || exit
 
 # 注意：LOCAL_IMAGE 变量需要指向本地 .qcow2 镜像文件的绝对路径
 if [ -z "$LOCAL_IMAGE" ]; then
-    # 默认路径建议，请确保该文件存在
-    LOCAL_IMAGE="/Users/a1-6/Documents/kaggle/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
-    echo "Warning: LOCAL_IMAGE is not set. Using default path: $LOCAL_IMAGE"
+    LOCAL_IMAGE="/public/home/genalyu/project/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
+fi
+
+# 注意：SIF_IMAGE 变量需要指向本地 .sif 镜像文件的绝对路径
+if [ -z "$SIF_IMAGE" ]; then
+    SIF_IMAGE="/public/home/genalyu/Ubuntu.sif"
 fi
 
 # 检查镜像文件是否存在
 if [ ! -f "$LOCAL_IMAGE" ]; then
     echo "Error: VM image file not found at $LOCAL_IMAGE"
-    echo "Please download it first or set LOCAL_IMAGE environment variable."
+    exit 1
+fi
+
+if [ ! -f "$SIF_IMAGE" ]; then
+    echo "Error: SIF image file not found at $SIF_IMAGE"
     exit 1
 fi
 
@@ -56,6 +63,7 @@ python run_multienv_uitars.py \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
     --path_to_vm "$LOCAL_IMAGE" \
+    --sif_path "$SIF_IMAGE" \
     --provider apptainer \
     --server_ip http://127.0.0.1
 

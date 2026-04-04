@@ -114,6 +114,7 @@ def config() -> argparse.Namespace:
     parser.add_argument("--trial-id", type=str, default="0")
     parser.add_argument("--provider", type=str, default="apptainer", choices=["docker", "apptainer", "singularity", "vmware", "virtualbox"])
     parser.add_argument("--os_type", type=str, default="Ubuntu", choices=["Ubuntu", "Windows"])
+    parser.add_argument("--sif_path", type=str, default=None, help="Path to the .sif image file for Apptainer")
     args = parser.parse_args()
 
     return args
@@ -248,6 +249,9 @@ def test(args: argparse.Namespace, test_all_meta: dict) -> None:
         )
 
         agents.append(agent)
+
+        if args.sif_path:
+            os.environ["OSWORLD_SANDBOX"] = args.sif_path
 
         env = DesktopEnv(
             path_to_vm=args.path_to_vm,
