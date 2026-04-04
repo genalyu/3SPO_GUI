@@ -55,8 +55,8 @@ class ApptainerProvider(Provider):
         # Priority: 1. Environment variable 2. SIF file (better for old kernels) 3. Directory Sandbox
         self.sandbox_path = os.getenv("OSWORLD_SANDBOX")
         if not self.sandbox_path:
-            sif_path = "/public/home/xlwang/genalyu/3SPO/osworld_uitars.sif"
-            dir_path = "/public/home/xlwang/genalyu/3SPO/osworld-sandbox"
+            sif_path = "/public/home/genalyu/osworld_uitars.sif"
+            dir_path = "/public/home/genalyu/osworld-sandbox"
             self.sandbox_path = sif_path if os.path.exists(sif_path) else dir_path
 
         # Local cache path in /tmp to avoid NFS latency and permission issues
@@ -226,23 +226,11 @@ class ApptainerProvider(Provider):
                 runtime_nginx_path.mkdir(parents=True, exist_ok=True)
 
                 # If the source is a directory, copy existing /run content to avoid shadowing entry.sh
-                dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
-                source_run_dir = dir_path / "run"
-                source_nginx_path = dir_path / "etc/nginx"
+                source_run_dir = source_sandbox / "run" if not is_sif else None
+                source_nginx_path = source_sandbox / "etc/nginx" if not is_sif else None
 
                 # Priority copy for run directory
-                if source_run_dir.exists() and source_run_dir.is_dir():
-                    for item in os.listdir(source_run_dir):
-                        s = source_run_dir / item
-                        d = runtime_run_dir / item
-                        if s.is_dir():
-                            if d.exists():
-                                shutil.rmtree(d)
-                            shutil.copytree(s, d, symlinks=True)
-                        else:
-                            shutil.copy2(s, d)
-                elif not is_sif and source_sandbox.is_dir() and (source_sandbox / "run").exists():
-                    source_run_dir = source_sandbox / "run"
+                if source_run_dir and source_run_dir.exists() and source_run_dir.is_dir():
                     for item in os.listdir(source_run_dir):
                         s = source_run_dir / item
                         d = runtime_run_dir / item
@@ -287,11 +275,9 @@ class ApptainerProvider(Provider):
                 os.chmod(fake_id_path, 0o755)
 
                 # Priority copy for nginx config
-                if source_nginx_path.exists() and source_nginx_path.is_dir():
+                if source_nginx_path and source_nginx_path.exists() and source_nginx_path.is_dir():
                     shutil.copytree(source_nginx_path, runtime_nginx_path, symlinks=True, dirs_exist_ok=True)
-                elif not is_sif and source_sandbox.is_dir() and (source_sandbox / "etc/nginx").exists():
-                    shutil.copytree(source_sandbox / "etc/nginx", runtime_nginx_path, symlinks=True, dirs_exist_ok=True)
-
+                
                 if any(runtime_nginx_path.iterdir()):
                     logger.info(f"Modifying local nginx config to use ports (API: {self.server_port}, VNC: {self.vnc_port})...")
                     # Replace port 80 (standard API) with our dynamic server_port
@@ -334,6 +320,8 @@ class ApptainerProvider(Provider):
                 env["APPTAINER_TMPDIR"] = str(apptainer_tmp)
                 env["APPTAINER_CACHEDIR"] = str(apptainer_cache)
                 env["APPTAINER_DISABLE_CACHE"] = "True"
+                env["APPTAINER_NO_OVERLAY"] = "True"
+                env["SINGULARITY_NO_OVERLAY"] = "True"
                 # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
                 env.update({
                     "APPTAINERENV_VNC_PORT": str(self.vnc_port),
@@ -357,12 +345,9 @@ class ApptainerProvider(Provider):
                 # Define the entry script path. Usually /run/entry.sh or /entry.sh
                 # We'll check which one exists in the source sandbox or directory
                 entry_script = "/run/entry.sh"
-                dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
                 if not (runtime_run_dir / "entry.sh").exists() and \
-                   not (not is_sif and source_sandbox.is_dir() and (source_sandbox / "run/entry.sh").exists()) and \
-                   not (dir_path.is_dir() and (dir_path / "run/entry.sh").exists()):
-                    if (not is_sif and source_sandbox.is_dir() and (source_sandbox / "entry.sh").exists()) or \
-                       (dir_path.is_dir() and (dir_path / "entry.sh").exists()):
+                   not (not is_sif and source_sandbox.is_dir() and (source_sandbox / "run/entry.sh").exists()):
+                    if (not is_sif and source_sandbox.is_dir() and (source_sandbox / "entry.sh").exists()):
                         entry_script = "/entry.sh"
                     else:
                         # Fallback to run if we can't find entry script
@@ -373,8 +358,11 @@ class ApptainerProvider(Provider):
                 # Re-ordered to try simplest modes first (which worked in manual test)
                 preflight_modes = [
                     [],
+                    ["--no-mount", "overlay"],
                     ["--cleanenv"],
+                    ["--cleanenv", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home"],
+                    ["--cleanenv", "--no-home", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home", "--writable-tmpfs"],
                     ["--cleanenv", "--containall"],
                 ]
