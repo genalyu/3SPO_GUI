@@ -193,11 +193,7 @@ class ApptainerProvider(Provider):
                 
                 runtime_root = self.local_sandbox_root / f"osworld_runtime_{os.getpid()}"
                 logger.info(f"Using runtime root: {runtime_root}")
-                if runtime_root.exists():
-                    if runtime_root.is_dir() and "osworld_runtime_" in runtime_root.name:
-                        shutil.rmtree(runtime_root, ignore_errors=True)
-                    else:
-                        raise RuntimeError(f"Safety check failed: Refusing to delete {runtime_root}")
+                # DEBUG: Skipping cleanup in start_emulator
                 runtime_root.mkdir(parents=True, exist_ok=True)
 
                 # Create runtime directories for mounting
@@ -229,31 +225,19 @@ class ApptainerProvider(Provider):
                 runtime_misc_dir.mkdir(parents=True, exist_ok=True)
                 runtime_nginx_path.mkdir(parents=True, exist_ok=True)
 
-                # If the source is a directory, copy existing /run content to avoid shadowing entry.sh
-                dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
-                source_run_dir = dir_path / "run"
-                source_nginx_path = dir_path / "etc/nginx"
+                # Define source paths based on sandbox type
+                source_run_dir = source_sandbox / "run" if not is_sif else Path("/nonexistent")
+                source_nginx_path = source_sandbox / "etc/nginx" if not is_sif else Path("/nonexistent")
 
                 # Priority copy for run directory
-                if source_run_dir.exists() and source_run_dir.is_dir():
+                if not is_sif and source_run_dir.exists() and source_run_dir.is_dir():
                     for item in os.listdir(source_run_dir):
                         s = source_run_dir / item
                         d = runtime_run_dir / item
                         if s.is_dir():
                             if d.exists():
-                                shutil.rmtree(d)
-                            shutil.copytree(s, d, symlinks=True)
-                        else:
-                            shutil.copy2(s, d)
-                elif not is_sif and source_sandbox.is_dir() and (source_sandbox / "run").exists():
-                    source_run_dir = source_sandbox / "run"
-                    for item in os.listdir(source_run_dir):
-                        s = source_run_dir / item
-                        d = runtime_run_dir / item
-                        if s.is_dir():
-                            if d.exists():
-                                shutil.rmtree(d)
-                            shutil.copytree(s, d, symlinks=True)
+                                logger.info(f"DEBUG: Skipping rmtree for {d}")
+                            shutil.copytree(s, d, symlinks=True, dirs_exist_ok=True)
                         else:
                             shutil.copy2(s, d)
                 
@@ -291,10 +275,8 @@ class ApptainerProvider(Provider):
                 os.chmod(fake_id_path, 0o755)
 
                 # Priority copy for nginx config
-                if source_nginx_path.exists() and source_nginx_path.is_dir():
+                if not is_sif and source_nginx_path.exists() and source_nginx_path.is_dir():
                     shutil.copytree(source_nginx_path, runtime_nginx_path, symlinks=True, dirs_exist_ok=True)
-                elif not is_sif and source_sandbox.is_dir() and (source_sandbox / "etc/nginx").exists():
-                    shutil.copytree(source_sandbox / "etc/nginx", runtime_nginx_path, symlinks=True, dirs_exist_ok=True)
 
                 if any(runtime_nginx_path.iterdir()):
                     logger.info(f"Modifying local nginx config to use ports (API: {self.server_port}, VNC: {self.vnc_port})...")
@@ -494,6 +476,7 @@ class ApptainerProvider(Provider):
         self.stop_emulator(path_to_vm)
 
     def stop_emulator(self, path_to_vm: str):
+        logger.info(f"DEBUG: stop_emulator called for VM {path_to_vm}")
         if self.process:
             logger.info(f"Stopping Apptainer container (PID: {self.process.pid})...")
             try:
@@ -519,30 +502,9 @@ class ApptainerProvider(Provider):
             self.process_log_file = None
             self.process_log_path = None
         
-        # Cleanup regardless of process state
+        # Release ports but DO NOT delete any files for safety during debugging
         self._release_ports()
-        if hasattr(self, 'fake_id_path') and self.fake_id_path and self.fake_id_path.exists():
-            try:
-                # CRITICAL: Only delete if inside /tmp/osworld_cache
-                if "osworld_cache" in str(self.fake_id_path):
-                    self.fake_id_path.unlink()
-            except:
-                pass
-        if hasattr(self, 'runtime_root') and self.runtime_root and self.runtime_root.exists():
-            try:
-                # CRITICAL SAFETY CHECK:
-                # Only delete if it's a directory AND inside /tmp/osworld_cache 
-                # AND has the specific runtime name pattern.
-                root_path = Path(self.runtime_root)
-                if root_path.is_dir() and "osworld_runtime_" in root_path.name and "osworld_cache" in str(root_path):
-                    logger.info(f"Safely removing runtime directory: {root_path}")
-                    shutil.rmtree(root_path, ignore_errors=True)
-                else:
-                    logger.warning(f"Refusing to delete suspicious runtime path: {root_path}")
-            except Exception as e:
-                logger.warning(f"Failed to remove runtime directory {self.runtime_root}: {e}")
-            finally:
-                self.runtime_root = None
+        logger.info("CRITICAL DEBUG: File cleanup is DISABLED. If SIF is deleted, it is NOT this script.")
 
         self.server_port = None
         self.vnc_port = None
