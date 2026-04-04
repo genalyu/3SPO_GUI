@@ -55,9 +55,17 @@ class ApptainerProvider(Provider):
         # Priority: 1. Environment variable 2. SIF file (better for old kernels) 3. Directory Sandbox
         self.sandbox_path = os.getenv("OSWORLD_SANDBOX")
         if not self.sandbox_path:
+            # Prefer SIF over directory on network filesystems
             sif_path = "/public/home/genalyu/osworld_uitars.sif"
             dir_path = "/public/home/genalyu/osworld-sandbox"
             self.sandbox_path = sif_path if os.path.exists(sif_path) else dir_path
+        
+        # If we have a directory sandbox but a SIF exists with similar name, maybe use SIF?
+        if self.sandbox_path and os.path.isdir(self.sandbox_path):
+            potential_sif = Path(self.sandbox_path).with_suffix(".sif")
+            if potential_sif.exists():
+                logger.info(f"Directory sandbox detected, but SIF file found at {potential_sif}. Using SIF for better NFS compatibility.")
+                self.sandbox_path = str(potential_sif)
 
         # Local cache path in /tmp to avoid NFS latency and permission issues
         self.local_sandbox_root = Path("/tmp/osworld_cache")
@@ -323,18 +331,24 @@ class ApptainerProvider(Provider):
                 env.update(self.environment)
                 apptainer_tmp = runtime_root / "apptainer_tmp"
                 apptainer_cache = runtime_root / "apptainer_cache"
+                apptainer_work = runtime_root / "apptainer_work"
+                apptainer_state = runtime_root / "apptainer_state"
                 apptainer_tmp.mkdir(parents=True, exist_ok=True)
                 apptainer_cache.mkdir(parents=True, exist_ok=True)
+                apptainer_work.mkdir(parents=True, exist_ok=True)
+                apptainer_state.mkdir(parents=True, exist_ok=True)
+                
                 env["APPTAINER_TMPDIR"] = str(apptainer_tmp)
                 env["APPTAINER_CACHEDIR"] = str(apptainer_cache)
-                env["APPTAINER_WORKDIR"] = str(runtime_root / "apptainer_work")
-                (runtime_root / "apptainer_work").mkdir(parents=True, exist_ok=True)
+                env["APPTAINER_WORKDIR"] = str(apptainer_work)
+                env["APPTAINER_SESSIONDIR"] = str(apptainer_state) # Key for session management
                 env["APPTAINER_DISABLE_CACHE"] = "True"
                 env["APPTAINER_NO_OVERLAY"] = "True"
+                
                 env["SINGULARITY_TMPDIR"] = str(apptainer_tmp)
                 env["SINGULARITY_CACHEDIR"] = str(apptainer_cache)
-                env["SINGULARITY_WORKDIR"] = str(runtime_root / "apptainer_work")
-                env["SINGULARITY_DISABLE_CACHE"] = "True"
+                env["SINGULARITY_WORKDIR"] = str(apptainer_work)
+                env["SINGULARITY_SESSIONDIR"] = str(apptainer_state)
                 env["SINGULARITY_NO_OVERLAY"] = "True"
                 # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
                 env.update({
@@ -372,7 +386,9 @@ class ApptainerProvider(Provider):
                 # Re-ordered to try simplest modes first (which worked in manual test)
                 preflight_modes = [
                     [],
+                    ["--userns"],
                     ["--no-mount", "overlay"],
+                    ["--userns", "--no-mount", "overlay"],
                     ["--contain"],
                     ["--contain", "--no-mount", "overlay"],
                     ["--cleanenv"],
