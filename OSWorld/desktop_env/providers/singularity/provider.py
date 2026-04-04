@@ -188,8 +188,16 @@ class ApptainerProvider(Provider):
                     raise FileNotFoundError(f"SIF image or Sandbox directory not found: {self.sandbox_path}")
 
                 source_sandbox = Path(self.sandbox_path).absolute()
+                is_dir = source_sandbox.is_dir()
                 # If it's a SIF file, we don't treat it as a directory for internal path joins
-                is_sif = source_sandbox.is_file() and source_sandbox.suffix == '.sif'
+                is_sif = source_sandbox.is_file() and (source_sandbox.suffix == '.sif' or "sif" in source_sandbox.name.lower())
+                
+                if is_dir:
+                    logger.info(f"Sandbox path is a DIRECTORY: {source_sandbox}")
+                elif is_sif:
+                    logger.info(f"Sandbox path is a SIF file: {source_sandbox}")
+                else:
+                    logger.info(f"Sandbox path is a regular file: {source_sandbox}")
                 
                 runtime_root = self.local_sandbox_root / f"osworld_runtime_{os.getpid()}"
                 if runtime_root.exists():
@@ -319,8 +327,14 @@ class ApptainerProvider(Provider):
                 apptainer_cache.mkdir(parents=True, exist_ok=True)
                 env["APPTAINER_TMPDIR"] = str(apptainer_tmp)
                 env["APPTAINER_CACHEDIR"] = str(apptainer_cache)
+                env["APPTAINER_WORKDIR"] = str(runtime_root / "apptainer_work")
+                (runtime_root / "apptainer_work").mkdir(parents=True, exist_ok=True)
                 env["APPTAINER_DISABLE_CACHE"] = "True"
                 env["APPTAINER_NO_OVERLAY"] = "True"
+                env["SINGULARITY_TMPDIR"] = str(apptainer_tmp)
+                env["SINGULARITY_CACHEDIR"] = str(apptainer_cache)
+                env["SINGULARITY_WORKDIR"] = str(runtime_root / "apptainer_work")
+                env["SINGULARITY_DISABLE_CACHE"] = "True"
                 env["SINGULARITY_NO_OVERLAY"] = "True"
                 # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
                 env.update({
@@ -358,10 +372,17 @@ class ApptainerProvider(Provider):
                 # Re-ordered to try simplest modes first (which worked in manual test)
                 preflight_modes = [
                     [],
+                    ["--no-overlay"],
                     ["--no-mount", "overlay"],
+                    ["--userns"],
+                    ["--userns", "--no-overlay"],
+                    ["--contain"],
+                    ["--contain", "--no-overlay"],
                     ["--cleanenv"],
+                    ["--cleanenv", "--no-overlay"],
                     ["--cleanenv", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home"],
+                    ["--cleanenv", "--no-home", "--no-overlay"],
                     ["--cleanenv", "--no-home", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home", "--writable-tmpfs"],
                     ["--cleanenv", "--containall"],
@@ -376,9 +397,15 @@ class ApptainerProvider(Provider):
                         "echo preflight_ok && "
                         "qemu-system-x86_64 -machine accel=kvm -display none -vga none -m 128 -nodefaults -monitor stdio -chardev stdio,id=char0 -serial chardev:char0 </dev/null > /dev/null 2>&1 && echo kvm_init_ok || echo kvm_init_failed"
                     )
+                    # Define the common flags to try for this sandbox
+                    common_flags = []
+                    if is_dir:
+                        common_flags.append("--sandbox")
+                    
                     preflight_cmd = [
                         "apptainer", "exec",
                         *mode_flags,
+                        *common_flags,
                         "--bind", f"{runtime_run_dir}:/run",
                         "--bind", f"{runtime_run_dir}:/var/run",
                         "--bind", f"{runtime_storage_dir}:/storage",
@@ -417,6 +444,8 @@ class ApptainerProvider(Provider):
                     "apptainer",
                     "exec" if entry_script else "run",
                     *selected_mode,
+                    # If it's a directory, ensure we use --sandbox if it helped during preflight
+                    *(["--sandbox"] if is_dir else []),
                     # REMOVED fake_id binding as it causes QEMU ioctl permission issues
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
