@@ -176,3 +176,11 @@ checkpoints/
 wandb/
 
 osworld-sandbox/
+# 忽略所有 tar 包
+*.tar
+
+# 忽略日志文件夹下的所有内容
+logs/
+
+# 如果你还有 sif 镜像，建议也忽略
+*.sif
