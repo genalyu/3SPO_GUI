@@ -185,9 +185,12 @@ class ApptainerProvider(Provider):
                 self.vlc_port = self._get_available_port(8080 + (os.getpid() % 100))
 
                 if not os.path.exists(self.sandbox_path):
-                    raise FileNotFoundError(f"Sandbox directory not found: {self.sandbox_path}")
+                    raise FileNotFoundError(f"SIF image or Sandbox directory not found: {self.sandbox_path}")
 
                 source_sandbox = Path(self.sandbox_path)
+                # If it's a SIF file, we don't treat it as a directory for internal path joins
+                is_sif = source_sandbox.is_file() and source_sandbox.suffix == '.sif'
+                
                 runtime_root = self.local_sandbox_root / f"osworld_runtime_{os.getpid()}"
                 if runtime_root.exists():
                     shutil.rmtree(runtime_root, ignore_errors=True)
@@ -238,7 +241,7 @@ class ApptainerProvider(Provider):
                             shutil.copytree(s, d, symlinks=True)
                         else:
                             shutil.copy2(s, d)
-                elif source_sandbox.is_dir() and (source_sandbox / "run").exists():
+                elif not is_sif and source_sandbox.is_dir() and (source_sandbox / "run").exists():
                     source_run_dir = source_sandbox / "run"
                     for item in os.listdir(source_run_dir):
                         s = source_run_dir / item
@@ -286,7 +289,7 @@ class ApptainerProvider(Provider):
                 # Priority copy for nginx config
                 if source_nginx_path.exists() and source_nginx_path.is_dir():
                     shutil.copytree(source_nginx_path, runtime_nginx_path, symlinks=True, dirs_exist_ok=True)
-                elif source_sandbox.is_dir() and (source_sandbox / "etc/nginx").exists():
+                elif not is_sif and source_sandbox.is_dir() and (source_sandbox / "etc/nginx").exists():
                     shutil.copytree(source_sandbox / "etc/nginx", runtime_nginx_path, symlinks=True, dirs_exist_ok=True)
 
                 if any(runtime_nginx_path.iterdir()):
@@ -356,9 +359,9 @@ class ApptainerProvider(Provider):
                 entry_script = "/run/entry.sh"
                 dir_path = Path("/public/home/xlwang/genalyu/3SPO/osworld-sandbox")
                 if not (runtime_run_dir / "entry.sh").exists() and \
-                   not (source_sandbox.is_dir() and (source_sandbox / "run/entry.sh").exists()) and \
+                   not (not is_sif and source_sandbox.is_dir() and (source_sandbox / "run/entry.sh").exists()) and \
                    not (dir_path.is_dir() and (dir_path / "run/entry.sh").exists()):
-                    if (source_sandbox.is_dir() and (source_sandbox / "entry.sh").exists()) or \
+                    if (not is_sif and source_sandbox.is_dir() and (source_sandbox / "entry.sh").exists()) or \
                        (dir_path.is_dir() and (dir_path / "entry.sh").exists()):
                         entry_script = "/entry.sh"
                     else:

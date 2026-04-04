@@ -16,7 +16,9 @@ source ${CONDA_BASE}/etc/profile.d/conda.sh
 
 # 激活环境
 conda activate 3spo
-
+echo "1. 存在性: "; [ -e /dev/kvm ] && echo "OK" || echo "FAIL"; \
+echo "2. 权限: "; [ -w /dev/kvm ] && echo "OK (可写)" || echo "FAIL (无权)"; \
+echo "3. 硬件支持: "; grep -Eoc '(vmx|svm)' /proc/cpuinfo
 # 确保当前目录在项目根目录
 PROJECT_ROOT="/public/home/genalyu/project/3SPO"
 cd $PROJECT_ROOT
