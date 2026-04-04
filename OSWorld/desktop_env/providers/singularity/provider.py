@@ -341,7 +341,9 @@ class ApptainerProvider(Provider):
                 env["APPTAINER_TMPDIR"] = str(apptainer_tmp)
                 env["APPTAINER_CACHEDIR"] = str(apptainer_cache)
                 env["APPTAINER_WORKDIR"] = str(apptainer_work)
-                env["APPTAINER_SESSIONDIR"] = str(apptainer_state) # Key for session management
+                env["APPTAINER_SESSIONDIR"] = str(apptainer_state)
+                env["APPTAINER_STATEDIR"] = str(apptainer_state) # Force internal state to local /tmp
+                env["APPTAINER_LOCALSTATEDIR"] = str(apptainer_state) # Very important for relocatable installs
                 env["APPTAINER_DISABLE_CACHE"] = "True"
                 env["APPTAINER_NO_OVERLAY"] = "True"
                 
@@ -349,6 +351,8 @@ class ApptainerProvider(Provider):
                 env["SINGULARITY_CACHEDIR"] = str(apptainer_cache)
                 env["SINGULARITY_WORKDIR"] = str(apptainer_work)
                 env["SINGULARITY_SESSIONDIR"] = str(apptainer_state)
+                env["SINGULARITY_STATEDIR"] = str(apptainer_state)
+                env["SINGULARITY_LOCALSTATEDIR"] = str(apptainer_state)
                 env["SINGULARITY_NO_OVERLAY"] = "True"
                 # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
                 env.update({
