@@ -372,20 +372,14 @@ class ApptainerProvider(Provider):
                 # Re-ordered to try simplest modes first (which worked in manual test)
                 preflight_modes = [
                     [],
-                    ["--no-overlay"],
                     ["--no-mount", "overlay"],
-                    ["--userns"],
-                    ["--userns", "--no-overlay"],
                     ["--contain"],
-                    ["--contain", "--no-overlay"],
+                    ["--contain", "--no-mount", "overlay"],
                     ["--cleanenv"],
-                    ["--cleanenv", "--no-overlay"],
                     ["--cleanenv", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home"],
-                    ["--cleanenv", "--no-home", "--no-overlay"],
                     ["--cleanenv", "--no-home", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home", "--writable-tmpfs"],
-                    ["--cleanenv", "--containall"],
                 ]
                 selected_mode = None
                 preflight_failures = []
@@ -399,8 +393,6 @@ class ApptainerProvider(Provider):
                     )
                     # Define the common flags to try for this sandbox
                     common_flags = []
-                    if is_dir:
-                        common_flags.append("--sandbox")
                     
                     preflight_cmd = [
                         "apptainer", "exec",
@@ -444,8 +436,6 @@ class ApptainerProvider(Provider):
                     "apptainer",
                     "exec" if entry_script else "run",
                     *selected_mode,
-                    # If it's a directory, ensure we use --sandbox if it helped during preflight
-                    *(["--sandbox"] if is_dir else []),
                     # REMOVED fake_id binding as it causes QEMU ioctl permission issues
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
