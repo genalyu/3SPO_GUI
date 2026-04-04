@@ -192,8 +192,12 @@ class ApptainerProvider(Provider):
                 is_sif = source_sandbox.is_file() and source_sandbox.suffix == '.sif'
                 
                 runtime_root = self.local_sandbox_root / f"osworld_runtime_{os.getpid()}"
+                logger.info(f"Using runtime root: {runtime_root}")
                 if runtime_root.exists():
-                    shutil.rmtree(runtime_root, ignore_errors=True)
+                    if runtime_root.is_dir() and "osworld_runtime_" in runtime_root.name:
+                        shutil.rmtree(runtime_root, ignore_errors=True)
+                    else:
+                        raise RuntimeError(f"Safety check failed: Refusing to delete {runtime_root}")
                 runtime_root.mkdir(parents=True, exist_ok=True)
 
                 # Create runtime directories for mounting
@@ -519,16 +523,26 @@ class ApptainerProvider(Provider):
         self._release_ports()
         if hasattr(self, 'fake_id_path') and self.fake_id_path and self.fake_id_path.exists():
             try:
-                self.fake_id_path.unlink()
+                # CRITICAL: Only delete if inside /tmp/osworld_cache
+                if "osworld_cache" in str(self.fake_id_path):
+                    self.fake_id_path.unlink()
             except:
                 pass
         if hasattr(self, 'runtime_root') and self.runtime_root and self.runtime_root.exists():
             try:
-                # IMPORTANT: DO NOT delete the SIF file! 
-                # Only delete the runtime directories we created.
-                shutil.rmtree(self.runtime_root)
-            except:
-                pass
+                # CRITICAL SAFETY CHECK:
+                # Only delete if it's a directory AND inside /tmp/osworld_cache 
+                # AND has the specific runtime name pattern.
+                root_path = Path(self.runtime_root)
+                if root_path.is_dir() and "osworld_runtime_" in root_path.name and "osworld_cache" in str(root_path):
+                    logger.info(f"Safely removing runtime directory: {root_path}")
+                    shutil.rmtree(root_path, ignore_errors=True)
+                else:
+                    logger.warning(f"Refusing to delete suspicious runtime path: {root_path}")
+            except Exception as e:
+                logger.warning(f"Failed to remove runtime directory {self.runtime_root}: {e}")
+            finally:
+                self.runtime_root = None
 
         self.server_port = None
         self.vnc_port = None
