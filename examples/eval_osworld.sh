@@ -34,19 +34,21 @@ if [ -z "$LOCAL_IMAGE" ]; then
     LOCAL_IMAGE="/public/home/genalyu/project/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
 fi
 
-# 注意：SIF_IMAGE 变量需要指向本地 .sif 镜像文件的绝对路径
+# 注意：SIF_IMAGE 变量需要指向本地 .sif 镜像文件或 Sandbox 目录的绝对路径
 if [ -z "$SIF_IMAGE" ]; then
-    SIF_IMAGE="/public/home/genalyu/Ubuntu.sif"
+    # 如果 .sif 文件报错 "unsquashfs not found"，建议先将其解压为 Sandbox 目录并上传
+    # 解压命令: apptainer build --sandbox osworld-sandbox osworld.sif
+    SIF_IMAGE="/public/home/genalyu/osworld.sif"
 fi
 
-# 检查镜像文件是否存在
+# 检查镜像文件或目录是否存在
 if [ ! -f "$LOCAL_IMAGE" ]; then
     echo "Error: VM image file not found at $LOCAL_IMAGE"
     exit 1
 fi
 
-if [ ! -f "$SIF_IMAGE" ]; then
-    echo "Error: SIF image file not found at $SIF_IMAGE"
+if [ ! -e "$SIF_IMAGE" ]; then
+    echo "Error: SIF image or Sandbox directory not found at $SIF_IMAGE"
     exit 1
 fi
 

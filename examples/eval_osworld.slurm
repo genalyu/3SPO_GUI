@@ -1,9 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=osworld_eval
-#SBATCH --partition=a100          # 根据你的分区名修改
+#SBATCH --partition=H100          # 根据你的分区名修改
 #SBATCH --nodes=1                 # 4 个节点即可
-#SBATCH --nodelist=gpu23
-#SBATCH --gres=gpu:2              # 评估通常需要多张卡来跑 vLLM
+#SBATCH --gres=gpu:1              # 评估通常需要多张卡来跑 vLLM
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=256G
@@ -37,9 +36,33 @@ for i in {1..50}; do
     echo "Wait $i: Server not ready yet..."
     sleep 10
 done
+
 # --- 步骤 2: 运行 OSWorld 评估脚本 ---
 echo "Starting OSWorld evaluation..."
-cd OSWorld
+cd OSWorld || exit
+
+# 注意：LOCAL_IMAGE 变量需要指向本地 .qcow2 镜像文件的绝对路径
+if [ -z "$LOCAL_IMAGE" ]; then
+    LOCAL_IMAGE="/public/home/genalyu/project/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
+fi
+
+# 注意：SIF_IMAGE 变量需要指向本地 .sif 镜像文件或 Sandbox 目录的绝对路径
+if [ -z "$SIF_IMAGE" ]; then
+    # 如果 .sif 文件报错 "unsquashfs not found"，建议先将其解压为 Sandbox 目录并上传
+    # 解压命令: apptainer build --sandbox osworld-sandbox osworld.sif
+    SIF_IMAGE="/public/home/genalyu/osworld.sif"
+fi
+
+# 检查镜像文件或目录是否存在
+if [ ! -f "$LOCAL_IMAGE" ]; then
+    echo "Error: VM image file not found at $LOCAL_IMAGE"
+    exit 1
+fi
+
+if [ ! -e "$SIF_IMAGE" ]; then
+    echo "Error: SIF image or Sandbox directory not found at $SIF_IMAGE"
+    exit 1
+fi
 
 python run_multienv_uitars.py \
     --headless \
@@ -47,14 +70,15 @@ python run_multienv_uitars.py \
     --max_steps 15 \
     --max_trajectory_length 15 \
     --temperature 0.6 \
-    --model qwen2-5-vl-3b\
+    --model qwen2-5-vl-3b \
     --action_space pyautogui \
-    --num_envs 8 \
+    --num_envs 1 \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
     --path_to_vm "$LOCAL_IMAGE" \
-    --provider docker \
+    --sif_path "$SIF_IMAGE" \
+    --provider apptainer \
     --server_ip http://127.0.0.1
 
 # --- 步骤 3: 清理 ---
