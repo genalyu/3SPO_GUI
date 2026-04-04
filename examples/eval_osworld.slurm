@@ -55,7 +55,9 @@ cd OSWorld || exit
 
 # 动态指定路径 (优先使用环境变量，否则使用默认值)
 LOCAL_IMAGE=${LOCAL_IMAGE:-"/public/home/genalyu/project/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"}
-SIF_IMAGE=${SIF_IMAGE:-"/public/home/genalyu/osworld_sandbox"}
+# SIF_IMAGE=${SIF_IMAGE:-"/public/home/genalyu/osworld_sandbox"}
+SIF_IMAGE=${SIF_IMAGE:-"/public/home/genalyu/osworld.sif"}
+
 
 # 检查镜像文件或目录是否存在
 if [ ! -f "$LOCAL_IMAGE" ]; then
