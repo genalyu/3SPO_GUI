@@ -38,7 +38,7 @@ fi
 if [ -z "$SIF_IMAGE" ]; then
     # 如果 .sif 文件报错 "unsquashfs not found"，建议先将其解压为 Sandbox 目录并上传
     # 解压命令: apptainer build --sandbox osworld-sandbox osworld.sif
-    SIF_IMAGE="/public/home/genalyu/osworld.sandbox"
+    SIF_IMAGE="/public/home/genalyu/osworld_sandbox"
 fi
 
 # 检查镜像文件或目录是否存在
