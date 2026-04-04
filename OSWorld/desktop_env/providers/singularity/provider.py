@@ -342,8 +342,9 @@ class ApptainerProvider(Provider):
                 env["APPTAINER_CACHEDIR"] = str(apptainer_cache)
                 env["APPTAINER_WORKDIR"] = str(apptainer_work)
                 env["APPTAINER_SESSIONDIR"] = str(apptainer_state)
-                env["APPTAINER_STATEDIR"] = str(apptainer_state) # Force internal state to local /tmp
-                env["APPTAINER_LOCALSTATEDIR"] = str(apptainer_state) # Very important for relocatable installs
+                env["APPTAINER_STATEDIR"] = str(apptainer_state)
+                env["APPTAINER_RUNSTATE"] = str(apptainer_state) # Newer versions use this
+                env["APPTAINER_LOCALSTATEDIR"] = str(apptainer_state)
                 env["APPTAINER_DISABLE_CACHE"] = "True"
                 env["APPTAINER_NO_OVERLAY"] = "True"
                 
@@ -352,6 +353,7 @@ class ApptainerProvider(Provider):
                 env["SINGULARITY_WORKDIR"] = str(apptainer_work)
                 env["SINGULARITY_SESSIONDIR"] = str(apptainer_state)
                 env["SINGULARITY_STATEDIR"] = str(apptainer_state)
+                env["SINGULARITY_RUNSTATE"] = str(apptainer_state)
                 env["SINGULARITY_LOCALSTATEDIR"] = str(apptainer_state)
                 env["SINGULARITY_NO_OVERLAY"] = "True"
                 # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
@@ -391,8 +393,10 @@ class ApptainerProvider(Provider):
                 preflight_modes = [
                     [],
                     ["--userns"],
+                    ["--fakeroot"],
                     ["--no-mount", "overlay"],
                     ["--userns", "--no-mount", "overlay"],
+                    ["--fakeroot", "--no-mount", "overlay"],
                     ["--contain"],
                     ["--contain", "--no-mount", "overlay"],
                     ["--cleanenv"],
