@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=osworld_eval
-#SBATCH --partition=H100          # 根据你的分区名修改
+#SBATCH --partition=H200          # 根据你的分区名修改
 #SBATCH --nodes=1                 # 4 个节点即可
 #SBATCH --gres=gpu:1              # 评估通常需要多张卡来跑 vLLM
 #SBATCH --ntasks-per-node=1
