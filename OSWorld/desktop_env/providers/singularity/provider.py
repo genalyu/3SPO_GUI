@@ -373,7 +373,10 @@ class ApptainerProvider(Provider):
                 env["APPTAINER_CONFIGDIR"] = str(apptainer_config)
                 env["APPTAINER_DISABLE_CACHE"] = "True"
                 env["APPTAINER_BINDPATH"] = "" # Clear any system-wide default bind paths
-                # Removed NO_OVERLAY to allow Apptainer to use overlay if available to create mount points
+                env["APPTAINER_NO_OVERLAY"] = "True" # Force disable overlay
+                env["SINGULARITY_NO_OVERLAY"] = "True"
+                # Removed LD_PRELOAD to avoid issues with host libraries
+                env.pop("LD_PRELOAD", None)
                 
                 env["SINGULARITY_TMPDIR"] = str(apptainer_tmp)
                 env["SINGULARITY_CACHEDIR"] = str(apptainer_cache)
@@ -420,31 +423,19 @@ class ApptainerProvider(Provider):
                 # Re-ordered to try simplest modes first (which worked in manual test)
                 preflight_modes = []
                 sandbox_modes = [
-                    ["--writable"],
                     ["--writable", "--no-mount", "overlay"],
-                    ["--writable", "--cleanenv", "--no-home"],
-                    ["--writable", "--cleanenv", "--no-home", "--contain"],
+                    ["--writable", "--cleanenv", "--no-home", "--no-mount", "overlay"],
                     ["--writable", "--cleanenv", "--no-home", "--contain", "--no-mount", "overlay"],
-                    ["--writable", "--containall"],
+                    ["--writable"],
                 ]
                 generic_modes = [
-                    [],
-                    ["--userns"],
-                    ["--fakeroot"],
                     ["--no-mount", "overlay"],
-                    ["--no-mount", "hostfs"],
-                    ["--contain"],
-                    ["--containall"],
-                    ["--contain", "--no-mount", "overlay"],
-                    ["--cleanenv"],
-                    ["--cleanenv", "--no-mount", "overlay"],
-                    ["--cleanenv", "--no-home"],
+                    ["--no-mount", "overlay", "--no-mount", "hostfs"],
                     ["--cleanenv", "--no-home", "--no-mount", "overlay"],
-                    ["--cleanenv", "--no-home", "--writable-tmpfs"],
-                    ["--cleanenv", "--no-home", "--writable-tmpfs", "--no-mount", "hostfs"],
+                    ["--contain", "--no-mount", "overlay"],
                     ["--userns", "--no-mount", "overlay"],
                     ["--fakeroot", "--no-mount", "overlay"],
-                    ["--fakeroot", "--no-mount", "hostfs"],
+                    [],
                 ]
                 if is_dir:
                     preflight_modes.extend(sandbox_modes)
