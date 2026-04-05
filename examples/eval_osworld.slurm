@@ -17,8 +17,7 @@ source ${CONDA_BASE}/etc/profile.d/conda.sh
 # 激活环境
 conda activate 3spo
 echo "1. 存在性: "; [ -e /dev/kvm ] && echo "OK" || echo "FAIL"; \
-echo "2. 权限: "; [ -w /dev/kvm ] && echo "OK (可写)" || echo "FAIL (无权)"; \
-echo "3. 硬件支持: "; grep -Eoc '(vmx|svm)' /proc/cpuinfo
+sg kvm -c "[ -w /dev/kvm ]" && echo "OK (可写)" || echo "FAIL (无权)"
 # 确保当前目录在项目根目录
 PROJECT_ROOT="/public/home/genalyu/project/3SPO"
 cd $PROJECT_ROOT
@@ -54,9 +53,8 @@ echo "Starting OSWorld evaluation..."
 cd OSWorld || exit
 
 # 动态指定路径 (优先使用环境变量，否则使用默认值)
-LOCAL_IMAGE=${LOCAL_IMAGE:-"/public/home/genalyu/project/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"}
-SIF_IMAGE=${SIF_IMAGE:-"/public/home/genalyu/osworld_sandbox"}
-# SIF_IMAGE=${SIF_IMAGE:-"/public/home/genalyu/osworld.sif"}
+LOCAL_IMAGE=${LOCAL_IMAGE:-"/tmp/osworld_local/Ubuntu.qcow2"}
+SIF_IMAGE=${SIF_IMAGE:-"/tmp/osworld_local/osworld_sandbox"}
 
 
 # 检查镜像文件或目录是否存在
