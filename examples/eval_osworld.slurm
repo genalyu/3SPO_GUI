@@ -51,14 +51,13 @@ done
 # --- 步骤 2: 运行 OSWorld 评估脚本 ---
 echo "Starting OSWorld evaluation..."
 cd OSWorld || exit
-
-# 动态指定路径 (优先使用环境变量，否则使用默认值)
+# 动态指定路径 (优先使用本地 /tmp 路径，否则使用环境变量或默认值)
 LOCAL_IMAGE=${LOCAL_IMAGE:-"/tmp/osworld_local/Ubuntu.qcow2"}
 SIF_IMAGE=${SIF_IMAGE:-"/tmp/osworld_local/osworld_sandbox"}
 
 
 # 检查镜像文件或目录是否存在
-if [ ! -f "$LOCAL_IMAGE" ]; then
+if [ ! -e "$LOCAL_IMAGE" ]; then
     echo "Error: VM image file not found at $LOCAL_IMAGE"
     exit 1
 fi
@@ -68,7 +67,8 @@ if [ ! -e "$SIF_IMAGE" ]; then
     exit 1
 fi
 
-python run_multienv_uitars.py \
+# 使用 sg kvm 强制刷新组权限以确保 KVM 可写
+sg kvm -c "python run_multienv_uitars.py \
     --headless \
     --observation_type screenshot \
     --max_steps 15 \
@@ -80,10 +80,10 @@ python run_multienv_uitars.py \
     --result_dir ./results/ \
     --test_all_meta_path ./evaluation_examples/test_all.json \
     --trial-id 0 \
-    --path_to_vm "$LOCAL_IMAGE" \
-    --sif_path "$SIF_IMAGE" \
+    --path_to_vm \"$LOCAL_IMAGE\" \
+    --sif_path \"$SIF_IMAGE\" \
     --provider apptainer \
-    --server_ip http://127.0.0.1
+    --server_ip http://127.0.0.1"
 
 # --- 步骤 3: 清理 ---
 echo "Evaluation finished. Final cleanup..."
