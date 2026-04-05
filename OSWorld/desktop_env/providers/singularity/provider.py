@@ -55,13 +55,22 @@ class ApptainerProvider(Provider):
         self.apptainer_runtime_root = temp_dir / runtime_user / "apptainer_runtime"
         self.apptainer_runtime_root.mkdir(parents=True, exist_ok=True)
 
-        # Priority: 1. Environment variable 2. SIF file (better for old kernels) 3. Directory Sandbox
+        # Priority: 1. Environment variable 2. Local SSD sandbox 3. SIF file (better for old kernels) 4. Directory Sandbox
         self.sandbox_path = os.getenv("OSWORLD_SANDBOX")
         if not self.sandbox_path:
-            # Prefer SIF over directory on network filesystems
+            local_ssd_path = "/tmp/osworld_local/osworld_sandbox"
             sif_path = "/public/home/genalyu/osworld_uitars.sif"
             dir_path = "/public/home/genalyu/osworld_sandbox"
-            self.sandbox_path = sif_path if os.path.exists(sif_path) else dir_path
+            
+            if os.path.exists(local_ssd_path):
+                logger.info(f"Using local SSD sandbox: {local_ssd_path}")
+                self.sandbox_path = local_ssd_path
+            elif os.path.exists(sif_path):
+                logger.info(f"Using SIF image: {sif_path}")
+                self.sandbox_path = sif_path
+            else:
+                logger.info(f"Falling back to NFS directory sandbox: {dir_path}")
+                self.sandbox_path = dir_path
         
         # If we have a directory sandbox but a SIF exists with similar name, maybe use SIF?
         # COMMENTED OUT: Automatic switch to SIF can be problematic if SIF lacks mount points and overlay is unavailable.
@@ -385,8 +394,17 @@ class ApptainerProvider(Provider):
                 env["APPTAINER_CONFIGDIR"] = str(apptainer_config)
                 env["APPTAINER_DISABLE_CACHE"] = "True"
                 env["APPTAINER_BINDPATH"] = "" # Clear any system-wide default bind paths
-                env["APPTAINER_NO_OVERLAY"] = "True" # Force disable overlay
-                env["SINGULARITY_NO_OVERLAY"] = "True"
+                
+                # If sandbox is on local filesystem (like /tmp), we can try to use Overlay
+                # which is much more robust. If it's on NFS, we must disable it.
+                if str(source_sandbox).startswith("/tmp"):
+                    logger.info("Sandbox is in /tmp, allowing Overlay for better compatibility.")
+                    env["APPTAINER_NO_OVERLAY"] = "False"
+                    env["SINGULARITY_NO_OVERLAY"] = "False"
+                else:
+                    logger.warning("Sandbox is on NFS/network filesystem, forcing NO_OVERLAY.")
+                    env["APPTAINER_NO_OVERLAY"] = "True"
+                    env["SINGULARITY_NO_OVERLAY"] = "True"
                 
                 # FORCE all Apptainer state to local /tmp to avoid NFS overlay issues
                 env["APPTAINER_TMPDIR"] = str(apptainer_tmp)
@@ -446,18 +464,21 @@ class ApptainerProvider(Provider):
                 # Re-ordered to try simplest modes first (which worked in manual test)
                 preflight_modes = []
                 sandbox_modes = [
+                    ["--writable", "--no-mount", "overlay", "--contain"],
+                    ["--writable", "--no-mount", "overlay", "--no-home", "--cleanenv"],
                     ["--writable", "--no-mount", "overlay"],
-                    ["--writable", "--cleanenv", "--no-home", "--no-mount", "overlay"],
-                    ["--writable", "--cleanenv", "--no-home", "--contain", "--no-mount", "overlay"],
                     ["--writable"],
                 ]
                 generic_modes = [
+                    ["--no-mount", "overlay", "--contain"],
+                    ["--no-mount", "overlay", "--no-mount", "hostfs", "--contain"],
                     ["--no-mount", "overlay"],
                     ["--no-mount", "overlay", "--no-mount", "hostfs"],
                     ["--cleanenv", "--no-home", "--no-mount", "overlay"],
                     ["--contain", "--no-mount", "overlay"],
                     ["--userns", "--no-mount", "overlay"],
                     ["--fakeroot", "--no-mount", "overlay"],
+                    ["--contain"],
                     [],
                 ]
                 if is_dir:
