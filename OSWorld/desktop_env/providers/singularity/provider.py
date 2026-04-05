@@ -471,46 +471,26 @@ class ApptainerProvider(Provider):
                 preflight_modes = []
                 is_on_tmp = str(source_sandbox).startswith("/tmp")
                 
-                if is_on_tmp:
-                    # If on local SSD (/tmp), prefer modes WITH overlay as they are more robust
-                    sandbox_modes = [
-                        ["--writable", "--contain"],
-                        ["--writable", "--userns"],
-                        ["--writable", "--fakeroot"],
-                        ["--writable"],
-                        ["--writable", "--no-mount", "overlay", "--contain"],
-                    ]
-                    generic_modes = [
-                        ["--contain"],
-                        ["--userns"],
-                        ["--fakeroot"],
-                        [],
-                        ["--no-mount", "overlay"],
-                    ]
-                else:
-                    # If on NFS, force no-mount overlay to avoid invalid argument errors
-                    sandbox_modes = [
-                        ["--writable", "--no-mount", "overlay", "--contain"],
-                        ["--writable", "--no-mount", "overlay", "--userns"],
-                        ["--writable", "--no-mount", "overlay", "--fakeroot"],
-                        ["--writable", "--no-mount", "overlay", "--no-home", "--cleanenv"],
-                        ["--writable", "--no-mount", "overlay"],
-                        ["--writable"],
-                    ]
-                    generic_modes = [
-                        ["--no-mount", "overlay", "--contain"],
-                        ["--no-mount", "overlay", "--userns"],
-                        ["--no-mount", "overlay", "--fakeroot"],
-                        ["--no-mount", "overlay", "--no-mount", "hostfs", "--contain"],
-                        ["--no-mount", "overlay"],
-                        ["--no-mount", "overlay", "--no-mount", "hostfs"],
-                        ["--cleanenv", "--no-home", "--no-mount", "overlay"],
-                        ["--contain", "--no-mount", "overlay"],
-                        ["--userns", "--no-mount", "overlay"],
-                        ["--fakeroot", "--no-mount", "overlay"],
-                        ["--contain"],
-                        [],
-                    ]
+                # IMPORTANT: Move these out of the if/else to ensure they are available for all modes
+                sandbox_modes = [
+                    ["--writable", "--contain"],
+                    ["--writable", "--userns"],
+                    ["--writable", "--fakeroot"],
+                    ["--writable"],
+                    ["--writable", "--no-mount", "overlay", "--contain"],
+                ]
+                generic_modes = [
+                    ["--contain"],
+                    ["--userns"],
+                    ["--fakeroot"],
+                    [],
+                    ["--no-mount", "overlay"],
+                ]
+                
+                if not is_on_tmp:
+                    # If on NFS, force no-mount overlay for all modes
+                    sandbox_modes = [m + ["--no-mount", "overlay"] if "--no-mount" not in m else m for m in sandbox_modes]
+                    generic_modes = [m + ["--no-mount", "overlay"] if "--no-mount" not in m else m for m in generic_modes]
                 
                 if is_dir:
                     preflight_modes.extend(sandbox_modes)
@@ -577,16 +557,15 @@ class ApptainerProvider(Provider):
                     env["APPTAINERENV_KVM"] = "N"
                     env["VNC_PORT"] = str(self.vnc_port) # Re-ensure envs are there
                     # EMERGENCY PATCH: Replace accel=kvm with accel=tcg in all runtime scripts
-                    # to ensure QEMU doesn't try to use KVM and crash the container
-                    logger.info("Applying emergency software-emulation patch to runtime scripts...")
+                    # and remove ALL hostfwd rules that might cause binding errors.
+                    logger.info("Applying emergency software-emulation and network patches to runtime scripts...")
                     subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|accel=kvm|accel=tcg|g' 2>/dev/null || true", shell=True)
                     subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|-enable-kvm||g' 2>/dev/null || true", shell=True)
-                    # FIX: Remove hostfwd rules for privileged ports (22, 3389) that fail in containers
-                    logger.info("Patching out privileged hostfwd rules (22, 3389) to avoid binding errors...")
-                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|hostfwd=tcp::22-20.20.20.21:22,||g' 2>/dev/null || true", shell=True)
-                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|hostfwd=tcp::3389-20.20.20.21:3389||g' 2>/dev/null || true", shell=True)
-                    # Some scripts might use different spacing or format
-                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|hostfwd=tcp::22-20.20.20.21:22||g' 2>/dev/null || true", shell=True)
+                    # Use a more aggressive approach to remove all hostfwd rules
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's/hostfwd=[^, ]*//g' 2>/dev/null || true", shell=True)
+                    # Clean up commas
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's/,,/,/g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's/,-netdev/ -netdev/g' 2>/dev/null || true", shell=True)
                 else:
                     kvm_env = "Y"
                     env["APPTAINERENV_KVM"] = "Y"
