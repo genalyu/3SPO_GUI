@@ -64,11 +64,12 @@ class ApptainerProvider(Provider):
             self.sandbox_path = sif_path if os.path.exists(sif_path) else dir_path
         
         # If we have a directory sandbox but a SIF exists with similar name, maybe use SIF?
-        if self.sandbox_path and os.path.isdir(self.sandbox_path):
-            potential_sif = Path(self.sandbox_path).with_suffix(".sif")
-            if potential_sif.exists():
-                logger.info(f"Directory sandbox detected, but SIF file found at {potential_sif}. Using SIF for better NFS compatibility.")
-                self.sandbox_path = str(potential_sif)
+        # COMMENTED OUT: Automatic switch to SIF can be problematic if SIF lacks mount points and overlay is unavailable.
+        # if self.sandbox_path and os.path.isdir(self.sandbox_path):
+        #     potential_sif = Path(self.sandbox_path).with_suffix(".sif")
+        #     if potential_sif.exists():
+        #         logger.info(f"Directory sandbox detected, but SIF file found at {potential_sif}. Using SIF for better NFS compatibility.")
+        #         self.sandbox_path = str(potential_sif)
 
         # Local cache path in /tmp to avoid NFS latency and permission issues
         self.local_sandbox_root = Path("/tmp/osworld_cache")
@@ -206,6 +207,18 @@ class ApptainerProvider(Provider):
                 
                 if is_dir:
                     logger.info(f"Sandbox path is a DIRECTORY: {source_sandbox}")
+                    # Proactively create missing mount point directories in the sandbox directory
+                    # to avoid "destination doesn't exist" errors when overlay is not available.
+                    for mount_point in ["run", "storage", "tmp", "var/lib/nginx", "var/log/nginx", "var/lib/misc", "etc/nginx", "public", "var/run"]:
+                        mp_path = source_sandbox / mount_point
+                        if not mp_path.exists():
+                            try:
+                                mp_path.mkdir(parents=True, exist_ok=True)
+                                logger.info(f"Created missing mount point in sandbox: {mp_path}")
+                                # Ensure it's writable
+                                os.chmod(mp_path, 0o777)
+                            except Exception as e:
+                                logger.warning(f"Failed to create mount point {mp_path}: {e}")
                 elif is_sif:
                     logger.info(f"Sandbox path is a SIF file: {source_sandbox}")
                 else:
@@ -359,7 +372,8 @@ class ApptainerProvider(Provider):
                 env["APPTAINER_LOCALSTATEDIR"] = str(apptainer_state)
                 env["APPTAINER_CONFIGDIR"] = str(apptainer_config)
                 env["APPTAINER_DISABLE_CACHE"] = "True"
-                env["APPTAINER_NO_OVERLAY"] = "True"
+                env["APPTAINER_BINDPATH"] = "" # Clear any system-wide default bind paths
+                # Removed NO_OVERLAY to allow Apptainer to use overlay if available to create mount points
                 
                 env["SINGULARITY_TMPDIR"] = str(apptainer_tmp)
                 env["SINGULARITY_CACHEDIR"] = str(apptainer_cache)
@@ -369,7 +383,7 @@ class ApptainerProvider(Provider):
                 env["SINGULARITY_RUNSTATE"] = str(apptainer_state)
                 env["SINGULARITY_LOCALSTATEDIR"] = str(apptainer_state)
                 env["SINGULARITY_CONFIGDIR"] = str(apptainer_config)
-                env["SINGULARITY_NO_OVERLAY"] = "True"
+                # Removed NO_OVERLAY
                 # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
                 env.update({
                     "APPTAINERENV_VNC_PORT": str(self.vnc_port),
@@ -411,21 +425,26 @@ class ApptainerProvider(Provider):
                     ["--writable", "--cleanenv", "--no-home"],
                     ["--writable", "--cleanenv", "--no-home", "--contain"],
                     ["--writable", "--cleanenv", "--no-home", "--contain", "--no-mount", "overlay"],
+                    ["--writable", "--containall"],
                 ]
                 generic_modes = [
                     [],
                     ["--userns"],
                     ["--fakeroot"],
                     ["--no-mount", "overlay"],
-                    ["--userns", "--no-mount", "overlay"],
-                    ["--fakeroot", "--no-mount", "overlay"],
+                    ["--no-mount", "hostfs"],
                     ["--contain"],
+                    ["--containall"],
                     ["--contain", "--no-mount", "overlay"],
                     ["--cleanenv"],
                     ["--cleanenv", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home"],
                     ["--cleanenv", "--no-home", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home", "--writable-tmpfs"],
+                    ["--cleanenv", "--no-home", "--writable-tmpfs", "--no-mount", "hostfs"],
+                    ["--userns", "--no-mount", "overlay"],
+                    ["--fakeroot", "--no-mount", "overlay"],
+                    ["--fakeroot", "--no-mount", "hostfs"],
                 ]
                 if is_dir:
                     preflight_modes.extend(sandbox_modes)
