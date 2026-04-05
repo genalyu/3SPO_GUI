@@ -561,6 +561,16 @@ class ApptainerProvider(Provider):
                     logger.info("Applying emergency software-emulation and network patches to runtime scripts...")
                     subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|accel=kvm|accel=tcg|g' 2>/dev/null || true", shell=True)
                     subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|-enable-kvm||g' 2>/dev/null || true", shell=True)
+                    
+                    # FIX: UEFI Permission Denied or Missing.
+                    # QEMU may fail to open /storage/uefi.rom if it's read-only or has wrong ownership.
+                    logger.info("Patching out UEFI to use legacy BIOS for better compatibility...")
+                    # Remove UEFI related parameters from qemu command line
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|-drive if=pflash,format=raw,readonly=on,file=/storage/uefi.rom||g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|-drive if=pflash,format=raw,file=/storage/uefi.vars||g' 2>/dev/null || true", shell=True)
+                    # Also set BOOT_MODE environment variable for the container scripts
+                    env["APPTAINERENV_BOOT_MODE"] = "legacy"
+                    
                     # Use a more aggressive approach to remove all hostfwd rules
                     subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's/hostfwd=[^, ]*//g' 2>/dev/null || true", shell=True)
                     # Clean up commas
