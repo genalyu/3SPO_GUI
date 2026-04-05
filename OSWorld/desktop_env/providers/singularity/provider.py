@@ -581,6 +581,12 @@ class ApptainerProvider(Provider):
                     logger.info("Applying emergency software-emulation patch to runtime scripts...")
                     subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|accel=kvm|accel=tcg|g' 2>/dev/null || true", shell=True)
                     subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|-enable-kvm||g' 2>/dev/null || true", shell=True)
+                    # FIX: Remove hostfwd rules for privileged ports (22, 3389) that fail in containers
+                    logger.info("Patching out privileged hostfwd rules (22, 3389) to avoid binding errors...")
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|hostfwd=tcp::22-20.20.20.21:22,||g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|hostfwd=tcp::3389-20.20.20.21:3389||g' 2>/dev/null || true", shell=True)
+                    # Some scripts might use different spacing or format
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|hostfwd=tcp::22-20.20.20.21:22||g' 2>/dev/null || true", shell=True)
                 else:
                     kvm_env = "Y"
                     env["APPTAINERENV_KVM"] = "Y"
