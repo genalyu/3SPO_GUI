@@ -51,6 +51,9 @@ class ApptainerProvider(Provider):
         self.port_registry_dir = temp_dir / "apptainer_port_registry"
         self.port_registry_dir.mkdir(parents=True, exist_ok=True)
         self.lock_file.parent.mkdir(parents=True, exist_ok=True)
+        runtime_user = os.getenv("USER") or "user"
+        self.apptainer_runtime_root = temp_dir / runtime_user / "apptainer_runtime"
+        self.apptainer_runtime_root.mkdir(parents=True, exist_ok=True)
 
         # Priority: 1. Environment variable 2. SIF file (better for old kernels) 3. Directory Sandbox
         self.sandbox_path = os.getenv("OSWORLD_SANDBOX")
@@ -329,15 +332,23 @@ class ApptainerProvider(Provider):
                         del env[var]
                 
                 env.update(self.environment)
-                apptainer_tmp = runtime_root / "apptainer_tmp"
-                apptainer_cache = runtime_root / "apptainer_cache"
-                apptainer_work = runtime_root / "apptainer_work"
-                apptainer_state = runtime_root / "apptainer_state"
+                apptainer_runtime = self.apptainer_runtime_root / f"job_{os.getpid()}"
+                apptainer_tmp = apptainer_runtime / "tmp"
+                apptainer_cache = apptainer_runtime / "cache"
+                apptainer_work = apptainer_runtime / "work"
+                apptainer_state = apptainer_runtime / "state"
+                apptainer_config = apptainer_runtime / "config"
+                apptainer_runtime.mkdir(parents=True, exist_ok=True)
                 apptainer_tmp.mkdir(parents=True, exist_ok=True)
                 apptainer_cache.mkdir(parents=True, exist_ok=True)
                 apptainer_work.mkdir(parents=True, exist_ok=True)
                 apptainer_state.mkdir(parents=True, exist_ok=True)
-                
+                apptainer_config.mkdir(parents=True, exist_ok=True)
+                subprocess.run(f"chmod -R 777 {apptainer_runtime}", shell=True)
+
+                env["TMPDIR"] = str(apptainer_tmp)
+                env["TEMP"] = str(apptainer_tmp)
+                env["TMP"] = str(apptainer_tmp)
                 env["APPTAINER_TMPDIR"] = str(apptainer_tmp)
                 env["APPTAINER_CACHEDIR"] = str(apptainer_cache)
                 env["APPTAINER_WORKDIR"] = str(apptainer_work)
@@ -345,6 +356,7 @@ class ApptainerProvider(Provider):
                 env["APPTAINER_STATEDIR"] = str(apptainer_state)
                 env["APPTAINER_RUNSTATE"] = str(apptainer_state) # Newer versions use this
                 env["APPTAINER_LOCALSTATEDIR"] = str(apptainer_state)
+                env["APPTAINER_CONFIGDIR"] = str(apptainer_config)
                 env["APPTAINER_DISABLE_CACHE"] = "True"
                 env["APPTAINER_NO_OVERLAY"] = "True"
                 
@@ -355,6 +367,7 @@ class ApptainerProvider(Provider):
                 env["SINGULARITY_STATEDIR"] = str(apptainer_state)
                 env["SINGULARITY_RUNSTATE"] = str(apptainer_state)
                 env["SINGULARITY_LOCALSTATEDIR"] = str(apptainer_state)
+                env["SINGULARITY_CONFIGDIR"] = str(apptainer_config)
                 env["SINGULARITY_NO_OVERLAY"] = "True"
                 # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
                 env.update({
@@ -390,7 +403,15 @@ class ApptainerProvider(Provider):
 
                 # Define the preflight modes to try
                 # Re-ordered to try simplest modes first (which worked in manual test)
-                preflight_modes = [
+                preflight_modes = []
+                sandbox_modes = [
+                    ["--writable"],
+                    ["--writable", "--no-mount", "overlay"],
+                    ["--writable", "--cleanenv", "--no-home"],
+                    ["--writable", "--cleanenv", "--no-home", "--contain"],
+                    ["--writable", "--cleanenv", "--no-home", "--contain", "--no-mount", "overlay"],
+                ]
+                generic_modes = [
                     [],
                     ["--userns"],
                     ["--fakeroot"],
@@ -405,6 +426,9 @@ class ApptainerProvider(Provider):
                     ["--cleanenv", "--no-home", "--no-mount", "overlay"],
                     ["--cleanenv", "--no-home", "--writable-tmpfs"],
                 ]
+                if is_dir:
+                    preflight_modes.extend(sandbox_modes)
+                preflight_modes.extend(generic_modes)
                 selected_mode = None
                 preflight_failures = []
                 logger.info(f"Starting preflight loop with {len(preflight_modes)} modes...")
@@ -497,6 +521,7 @@ class ApptainerProvider(Provider):
                 # Store for cleanup
                 self.fake_id_path = fake_id_path
                 self.runtime_root = runtime_root
+                self.apptainer_runtime = apptainer_runtime
 
             # Wait for VM to be ready
             self._wait_for_vm_ready()
@@ -558,6 +583,11 @@ class ApptainerProvider(Provider):
                 # IMPORTANT: DO NOT delete the SIF file! 
                 # Only delete the runtime directories we created.
                 shutil.rmtree(self.runtime_root)
+            except:
+                pass
+        if hasattr(self, 'apptainer_runtime') and self.apptainer_runtime and self.apptainer_runtime.exists():
+            try:
+                shutil.rmtree(self.apptainer_runtime)
             except:
                 pass
 
