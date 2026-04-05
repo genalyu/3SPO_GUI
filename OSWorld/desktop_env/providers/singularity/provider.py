@@ -465,12 +465,16 @@ class ApptainerProvider(Provider):
                 preflight_modes = []
                 sandbox_modes = [
                     ["--writable", "--no-mount", "overlay", "--contain"],
+                    ["--writable", "--no-mount", "overlay", "--userns"],
+                    ["--writable", "--no-mount", "overlay", "--fakeroot"],
                     ["--writable", "--no-mount", "overlay", "--no-home", "--cleanenv"],
                     ["--writable", "--no-mount", "overlay"],
                     ["--writable"],
                 ]
                 generic_modes = [
                     ["--no-mount", "overlay", "--contain"],
+                    ["--no-mount", "overlay", "--userns"],
+                    ["--no-mount", "overlay", "--fakeroot"],
                     ["--no-mount", "overlay", "--no-mount", "hostfs", "--contain"],
                     ["--no-mount", "overlay"],
                     ["--no-mount", "overlay", "--no-mount", "hostfs"],
@@ -486,6 +490,7 @@ class ApptainerProvider(Provider):
                 preflight_modes.extend(generic_modes)
                 selected_mode = None
                 preflight_failures = []
+                final_kvm_status = "FAILED"
                 logger.info(f"Starting preflight loop with {len(preflight_modes)} modes...")
                 for mode_flags in preflight_modes:
                     # REAL KVM TEST: Can QEMU initialize KVM accel?
@@ -523,10 +528,12 @@ class ApptainerProvider(Provider):
                         logger.error(f"PREFLIGHT: mode '{mode_str}' WORKED. KVM inside: {kvm_status}")
                         if "kvm_init_ok" in stdout:
                             selected_mode = mode_flags
+                            final_kvm_status = "INITIALIZED"
                             break
                         # If KVM not initialized, keep searching but remember this as a fallback if nothing better works
                         if selected_mode is None:
                             selected_mode = mode_flags
+                            final_kvm_status = "FAILED"
                     else:
                         err = f"PREFLIGHT: mode '{mode_str}' FAILED: rc={return_code}, stderr={stderr[-200:] if stderr else 'empty'}"
                         preflight_failures.append(err)
@@ -534,6 +541,17 @@ class ApptainerProvider(Provider):
 
                 if selected_mode is None:
                     raise RuntimeError(f"Apptainer preflight failed: {' | '.join(preflight_failures)}")
+
+                # Update kvm_env based on preflight result
+                if final_kvm_status == "FAILED":
+                    logger.warning("KVM test failed inside container during preflight! Forcing software emulation for stability.")
+                    kvm_env = "N"
+                    kvm_flag = [] # Remove device binding to avoid crashes
+                    env["APPTAINERENV_KVM"] = "N"
+                    env["VNC_PORT"] = str(self.vnc_port) # Re-ensure envs are there
+                else:
+                    kvm_env = "Y"
+                    env["APPTAINERENV_KVM"] = "Y"
 
                 cmd = [
                     "apptainer",
