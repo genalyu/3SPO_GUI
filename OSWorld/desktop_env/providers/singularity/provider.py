@@ -160,6 +160,7 @@ class ApptainerProvider(Provider):
         process = subprocess.Popen(
             cmd,
             env=env,
+            cwd="/",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -224,7 +225,7 @@ class ApptainerProvider(Provider):
                 # Create local tmp and xdg runtime for the container
                 runtime_tmp_dir = runtime_root / "tmp"
                 runtime_tmp_dir.mkdir(parents=True, exist_ok=True)
-                runtime_xdg_dir = runtime_root / "xdg"
+                runtime_xdg_dir = runtime_tmp_dir / "xdg"
                 runtime_xdg_dir.mkdir(parents=True, exist_ok=True)
 
                 # Create storage directory for QEMU
@@ -380,7 +381,7 @@ class ApptainerProvider(Provider):
                     "APPTAINERENV_DHCP": "N", # Bypass bridge creation/DHCP inside container
                     "APPTAINERENV_NETWORK": "user", # Force usermode networking
                     "APPTAINERENV_KVM_FORCE": "Y", # Additional flag for some qemu-docker versions
-                    "APPTAINERENV_XDG_RUNTIME_DIR": "/xdg", # Local writable XDG path
+                    "APPTAINERENV_XDG_RUNTIME_DIR": "/tmp/xdg", # Local writable XDG path
                     "VNC_PORT": str(self.vnc_port),
                     "SERVER_PORT": str(self.server_port),
                     "CHROMIUM_PORT": str(self.chromium_port),
@@ -446,11 +447,11 @@ class ApptainerProvider(Provider):
                         "apptainer", "exec",
                         *mode_flags,
                         *common_flags,
+                        "--pwd", "/tmp",
                         "--bind", f"{runtime_run_dir}:/run",
                         "--bind", f"{runtime_run_dir}:/var/run",
                         "--bind", f"{runtime_storage_dir}:/storage",
                         "--bind", f"{runtime_tmp_dir}:/tmp",
-                        "--bind", f"{runtime_xdg_dir}:/xdg",
                         "--bind", f"{runtime_nginx_lib}:/var/lib/nginx",
                         "--bind", f"{runtime_nginx_log}:/var/log/nginx",
                         "--bind", f"{runtime_misc_dir}:/var/lib/misc",
@@ -484,6 +485,7 @@ class ApptainerProvider(Provider):
                     "apptainer",
                     "exec" if entry_script else "run",
                     *selected_mode,
+                    "--pwd", "/tmp",
                     # REMOVED fake_id binding as it causes QEMU ioctl permission issues
                     *kvm_flag,
                     "--bind", f"{os.path.abspath(path_to_vm)}:/System.qcow2",
@@ -497,7 +499,6 @@ class ApptainerProvider(Provider):
                     "--bind", f"{runtime_run_dir}:/var/run",
                     "--bind", f"{runtime_storage_dir}:/storage",
                     "--bind", f"{runtime_tmp_dir}:/tmp",
-                    "--bind", f"{runtime_xdg_dir}:/xdg",
                     "--bind", f"{runtime_nginx_lib}:/var/lib/nginx",
                     "--bind", f"{runtime_nginx_log}:/var/log/nginx",
                     "--bind", f"{runtime_misc_dir}:/var/lib/misc"
@@ -513,6 +514,7 @@ class ApptainerProvider(Provider):
                 self.process = subprocess.Popen(
                     cmd,
                     env=env,
+                    cwd="/",
                     stdout=self.process_log_file,
                     stderr=self.process_log_file,
                     preexec_fn=os.setsid 
