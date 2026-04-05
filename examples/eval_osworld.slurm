@@ -37,21 +37,20 @@ LOCAL_DIR="/tmp/osworld_local"
 NFS_SANDBOX="/public/home/genalyu/osworld_sandbox"
 NFS_QCOW2="/public/home/genalyu/project/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
 
-echo "检查计算节点本地数据..."
-if [ ! -d "$LOCAL_DIR/osworld_sandbox" ]; then
-    echo "本地沙盒不存在，正在从 NFS 拷贝到计算节点本地 SSD (这可能需要几分钟)..."
+# 预设路径，用于后续检查
+LOCAL_IMAGE="$LOCAL_DIR/Ubuntu.qcow2"
+SIF_IMAGE="$LOCAL_DIR/osworld_sandbox"
+
+if [ ! -d "$SIF_IMAGE" ]; then
+    echo "Syncing sandbox to local SSD..."
     mkdir -p "$LOCAL_DIR"
-    rsync -av "$NFS_SANDBOX" "$LOCAL_DIR/"
+    rsync -aq "$NFS_SANDBOX" "$LOCAL_DIR/"
 fi
 
 if [ ! -f "$LOCAL_IMAGE" ]; then
-    echo "本地镜像不存在，正在从 NFS 拷贝..."
-    cp "$NFS_QCOW2" "$LOCAL_DIR/"
+    echo "Copying VM image to local SSD..."
+    cp "$NFS_QCOW2" "$LOCAL_IMAGE"
 fi
-
-# 现在的路径检查就会在计算节点本地通过了
-LOCAL_IMAGE="$LOCAL_DIR/Ubuntu.qcow2"
-SIF_IMAGE="$LOCAL_DIR/osworld_sandbox"
 # --- 步骤 1: 启动模型推理服务 ---
 echo "Starting model server on GPU..."
 # 启动 vLLM 推理服务，使用 start_server.sh
