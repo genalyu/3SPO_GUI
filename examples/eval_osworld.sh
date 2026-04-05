@@ -37,7 +37,7 @@ fi
 # 注意：SIF_IMAGE 变量需要指向本地 .sif 镜像文件或 Sandbox 目录的绝对路径
 if [ -z "$SIF_IMAGE" ]; then
     # 如果 .sif 文件报错 "unsquashfs not found"，建议先将其解压为 Sandbox 目录并上传
-    # 解压命令: apptainer build --sandbox osworld-sandbox osworld.sif
+    # 解压命令: apptainer build --sandbox osworld_sandbox osworld.sif
     SIF_IMAGE="/public/home/genalyu/osworld_sandbox"
 fi
 

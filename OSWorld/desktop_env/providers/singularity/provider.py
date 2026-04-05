@@ -60,7 +60,7 @@ class ApptainerProvider(Provider):
         if not self.sandbox_path:
             # Prefer SIF over directory on network filesystems
             sif_path = "/public/home/genalyu/osworld_uitars.sif"
-            dir_path = "/public/home/genalyu/osworld-sandbox"
+            dir_path = "/public/home/genalyu/osworld_sandbox"
             self.sandbox_path = sif_path if os.path.exists(sif_path) else dir_path
         
         # If we have a directory sandbox but a SIF exists with similar name, maybe use SIF?
@@ -219,6 +219,18 @@ class ApptainerProvider(Provider):
                                 os.chmod(mp_path, 0o777)
                             except Exception as e:
                                 logger.warning(f"Failed to create mount point {mp_path}: {e}")
+                    
+                    # Special case for file-to-file bind mounts: the destination file MUST exist
+                    # if overlay is not available.
+                    for mount_file in ["System.qcow2", "boot.qcow2"]:
+                        mf_path = source_sandbox / mount_file
+                        if not mf_path.exists():
+                            try:
+                                mf_path.touch()
+                                logger.info(f"Created missing file mount point in sandbox: {mf_path}")
+                                os.chmod(mf_path, 0o666)
+                            except Exception as e:
+                                logger.warning(f"Failed to create file mount point {mf_path}: {e}")
                 elif is_sif:
                     logger.info(f"Sandbox path is a SIF file: {source_sandbox}")
                 else:
@@ -375,8 +387,16 @@ class ApptainerProvider(Provider):
                 env["APPTAINER_BINDPATH"] = "" # Clear any system-wide default bind paths
                 env["APPTAINER_NO_OVERLAY"] = "True" # Force disable overlay
                 env["SINGULARITY_NO_OVERLAY"] = "True"
-                # Removed LD_PRELOAD to avoid issues with host libraries
-                env.pop("LD_PRELOAD", None)
+                
+                # FORCE all Apptainer state to local /tmp to avoid NFS overlay issues
+                env["APPTAINER_TMPDIR"] = str(apptainer_tmp)
+                env["APPTAINER_CACHEDIR"] = str(apptainer_cache)
+                env["APPTAINER_WORKDIR"] = str(apptainer_work)
+                env["APPTAINER_SESSIONDIR"] = str(apptainer_state)
+                env["APPTAINER_STATEDIR"] = str(apptainer_state)
+                env["APPTAINER_RUNSTATE"] = str(apptainer_state)
+                env["APPTAINER_LOCALSTATEDIR"] = str(apptainer_state)
+                env["APPTAINER_CONFIGDIR"] = str(apptainer_config)
                 
                 env["SINGULARITY_TMPDIR"] = str(apptainer_tmp)
                 env["SINGULARITY_CACHEDIR"] = str(apptainer_cache)
@@ -386,6 +406,9 @@ class ApptainerProvider(Provider):
                 env["SINGULARITY_RUNSTATE"] = str(apptainer_state)
                 env["SINGULARITY_LOCALSTATEDIR"] = str(apptainer_state)
                 env["SINGULARITY_CONFIGDIR"] = str(apptainer_config)
+                
+                # Removed LD_PRELOAD to avoid issues with host libraries
+                env.pop("LD_PRELOAD", None)
                 # Removed NO_OVERLAY
                 # Apptainer uses APPTAINERENV_ prefix to pass vars into the container
                 env.update({
