@@ -32,6 +32,26 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# --- 步骤 0: 确保计算节点本地有数据 ---
+LOCAL_DIR="/tmp/osworld_local"
+NFS_SANDBOX="/public/home/genalyu/osworld_sandbox"
+NFS_QCOW2="/public/home/genalyu/project/3SPO/OSWorld/docker_vm_data/Ubuntu.qcow2"
+
+echo "检查计算节点本地数据..."
+if [ ! -d "$LOCAL_DIR/osworld_sandbox" ]; then
+    echo "本地沙盒不存在，正在从 NFS 拷贝到计算节点本地 SSD (这可能需要几分钟)..."
+    mkdir -p "$LOCAL_DIR"
+    rsync -av "$NFS_SANDBOX" "$LOCAL_DIR/"
+fi
+
+if [ ! -f "$LOCAL_IMAGE" ]; then
+    echo "本地镜像不存在，正在从 NFS 拷贝..."
+    cp "$NFS_QCOW2" "$LOCAL_DIR/"
+fi
+
+# 现在的路径检查就会在计算节点本地通过了
+LOCAL_IMAGE="$LOCAL_DIR/Ubuntu.qcow2"
+SIF_IMAGE="$LOCAL_DIR/osworld_sandbox"
 # --- 步骤 1: 启动模型推理服务 ---
 echo "Starting model server on GPU..."
 # 启动 vLLM 推理服务，使用 start_server.sh
@@ -51,9 +71,6 @@ done
 # --- 步骤 2: 运行 OSWorld 评估脚本 ---
 echo "Starting OSWorld evaluation..."
 cd OSWorld || exit
-# 动态指定路径 (优先使用本地 /tmp 路径，否则使用环境变量或默认值)
-LOCAL_IMAGE=${LOCAL_IMAGE:-"/tmp/osworld_local/Ubuntu.qcow2"}
-SIF_IMAGE=${SIF_IMAGE:-"/tmp/osworld_local/osworld_sandbox"}
 
 
 # 检查镜像文件或目录是否存在
