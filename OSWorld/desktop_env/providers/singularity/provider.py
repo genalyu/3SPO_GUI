@@ -154,7 +154,7 @@ class ApptainerProvider(Provider):
         
         raise TimeoutError(f"VM on port {self.server_port} failed to become ready within {timeout}s")
 
-    def _read_process_log_tail(self, max_lines: int = 80) -> str:
+    def _read_process_log_tail(self, max_lines: int = 200) -> str:
         if not self.process_log_path:
             return "No process log path available"
         log_path = Path(self.process_log_path)
@@ -162,7 +162,13 @@ class ApptainerProvider(Provider):
             return f"No process log file found at {log_path}"
         try:
             with open(log_path, "rb") as f:
-                return b"".join(f.readlines()[-max_lines:]).decode(errors="replace").strip() or "Process log is empty"
+                # Read more lines and look for actual error messages beyond warnings
+                lines = f.readlines()
+                relevant_lines = lines[-max_lines:]
+                content = b"".join(relevant_lines).decode(errors="replace").strip()
+                if not content:
+                    return "Process log is empty"
+                return content
         except Exception as e:
             return f"Failed to read process log: {e}"
 
@@ -463,28 +469,49 @@ class ApptainerProvider(Provider):
                 # Define the preflight modes to try
                 # Re-ordered to try simplest modes first (which worked in manual test)
                 preflight_modes = []
-                sandbox_modes = [
-                    ["--writable", "--no-mount", "overlay", "--contain"],
-                    ["--writable", "--no-mount", "overlay", "--userns"],
-                    ["--writable", "--no-mount", "overlay", "--fakeroot"],
-                    ["--writable", "--no-mount", "overlay", "--no-home", "--cleanenv"],
-                    ["--writable", "--no-mount", "overlay"],
-                    ["--writable"],
-                ]
-                generic_modes = [
-                    ["--no-mount", "overlay", "--contain"],
-                    ["--no-mount", "overlay", "--userns"],
-                    ["--no-mount", "overlay", "--fakeroot"],
-                    ["--no-mount", "overlay", "--no-mount", "hostfs", "--contain"],
-                    ["--no-mount", "overlay"],
-                    ["--no-mount", "overlay", "--no-mount", "hostfs"],
-                    ["--cleanenv", "--no-home", "--no-mount", "overlay"],
-                    ["--contain", "--no-mount", "overlay"],
-                    ["--userns", "--no-mount", "overlay"],
-                    ["--fakeroot", "--no-mount", "overlay"],
-                    ["--contain"],
-                    [],
-                ]
+                is_on_tmp = str(source_sandbox).startswith("/tmp")
+                
+                if is_on_tmp:
+                    # If on local SSD (/tmp), prefer modes WITH overlay as they are more robust
+                    sandbox_modes = [
+                        ["--writable", "--contain"],
+                        ["--writable", "--userns"],
+                        ["--writable", "--fakeroot"],
+                        ["--writable"],
+                        ["--writable", "--no-mount", "overlay", "--contain"],
+                    ]
+                    generic_modes = [
+                        ["--contain"],
+                        ["--userns"],
+                        ["--fakeroot"],
+                        [],
+                        ["--no-mount", "overlay"],
+                    ]
+                else:
+                    # If on NFS, force no-mount overlay to avoid invalid argument errors
+                    sandbox_modes = [
+                        ["--writable", "--no-mount", "overlay", "--contain"],
+                        ["--writable", "--no-mount", "overlay", "--userns"],
+                        ["--writable", "--no-mount", "overlay", "--fakeroot"],
+                        ["--writable", "--no-mount", "overlay", "--no-home", "--cleanenv"],
+                        ["--writable", "--no-mount", "overlay"],
+                        ["--writable"],
+                    ]
+                    generic_modes = [
+                        ["--no-mount", "overlay", "--contain"],
+                        ["--no-mount", "overlay", "--userns"],
+                        ["--no-mount", "overlay", "--fakeroot"],
+                        ["--no-mount", "overlay", "--no-mount", "hostfs", "--contain"],
+                        ["--no-mount", "overlay"],
+                        ["--no-mount", "overlay", "--no-mount", "hostfs"],
+                        ["--cleanenv", "--no-home", "--no-mount", "overlay"],
+                        ["--contain", "--no-mount", "overlay"],
+                        ["--userns", "--no-mount", "overlay"],
+                        ["--fakeroot", "--no-mount", "overlay"],
+                        ["--contain"],
+                        [],
+                    ]
+                
                 if is_dir:
                     preflight_modes.extend(sandbox_modes)
                 preflight_modes.extend(generic_modes)
@@ -549,6 +576,11 @@ class ApptainerProvider(Provider):
                     kvm_flag = [] # Remove device binding to avoid crashes
                     env["APPTAINERENV_KVM"] = "N"
                     env["VNC_PORT"] = str(self.vnc_port) # Re-ensure envs are there
+                    # EMERGENCY PATCH: Replace accel=kvm with accel=tcg in all runtime scripts
+                    # to ensure QEMU doesn't try to use KVM and crash the container
+                    logger.info("Applying emergency software-emulation patch to runtime scripts...")
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|accel=kvm|accel=tcg|g' 2>/dev/null || true", shell=True)
+                    subprocess.run(f"find {runtime_run_dir} -type f | xargs sed -i 's|-enable-kvm||g' 2>/dev/null || true", shell=True)
                 else:
                     kvm_env = "Y"
                     env["APPTAINERENV_KVM"] = "Y"
