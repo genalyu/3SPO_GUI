@@ -274,6 +274,8 @@ class RayWorkerGroup(WorkerGroup):
                     "RANK": str(rank),
                     "WG_PREFIX": self.name_prefix,
                     "WG_BACKEND": "ray",
+                    "LOCAL_WORLD_SIZE": str(local_world_size),
+                    "LOCAL_RANK": str(local_rank),
                     "RAY_LOCAL_WORLD_SIZE": str(local_world_size),
                     "RAY_LOCAL_RANK": str(local_rank),
                 }

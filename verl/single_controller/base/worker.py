@@ -129,17 +129,36 @@ class Worker(WorkerHelper):
         self._rank = rank
         self._world_size = world_size
 
+        # Ray sets RAY_LOCAL_* for worker placement. Mirror them to LOCAL_* so
+        # downstream torch/distributed code sees consistent rank metadata.
+        if os.getenv("LOCAL_RANK") is None and os.getenv("RAY_LOCAL_RANK") is not None:
+            os.environ["LOCAL_RANK"] = os.getenv("RAY_LOCAL_RANK")
+        if os.getenv("LOCAL_WORLD_SIZE") is None and os.getenv("RAY_LOCAL_WORLD_SIZE") is not None:
+            os.environ["LOCAL_WORLD_SIZE"] = os.getenv("RAY_LOCAL_WORLD_SIZE")
+
+        local_rank = int(os.getenv("LOCAL_RANK", "0"))
+        local_world_size = int(os.getenv("LOCAL_WORLD_SIZE", "1"))
+
         if "AMD" in torch.cuda.get_device_name():
             os.environ["CUDA_VISIBLE_DEVICES"] = os.getenv("ROCR_VISIBLE_DEVICES")
             os.environ["LOCAL_RANK"] = os.getenv("RAY_LOCAL_RANK")
             cuda_visible_devices = os.getenv("LOCAL_RANK", "0")
             torch.cuda.set_device(int(cuda_visible_devices))
 
+        # When running on NVIDIA MIG, Ray runtime_env can expose all MIG UUIDs
+        # to each worker. Rebind each worker to its per-rank MIG slice here.
+        all_mig_ids = os.getenv("VERL_ALL_MIG_IDS", "")
+        if all_mig_ids and "AMD" not in torch.cuda.get_device_name():
+            mig_ids = [mig_id.strip() for mig_id in all_mig_ids.split(",") if mig_id.strip()]
+            if local_rank < len(mig_ids):
+                os.environ["CUDA_VISIBLE_DEVICES"] = mig_ids[local_rank]
+                cuda_visible_devices = mig_ids[local_rank]
+                # After narrowing visibility to a single MIG device, use index 0.
+                if torch.cuda.is_available():
+                    torch.cuda.set_device(0)
+
         master_addr = os.getenv("MASTER_ADDR")
         master_port = os.getenv("MASTER_PORT")
-
-        local_world_size = int(os.getenv("LOCAL_WORLD_SIZE", "1"))
-        local_rank = int(os.getenv("LOCAL_RANK", "0"))
 
         store = {
             "_world_size": world_size,
